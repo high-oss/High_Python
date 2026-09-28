@@ -1,2 +1,47 @@
 # Copyright (c) 2026 Truestock
 # SPDX-License-Identifier: MIT
+
+"""Official Python SDK for the HIGH Open API."""
+
+from .client import AsyncHighClient, HighClient
+from .config import ENVIRONMENTS, Environment, HighClientOptions, ResolvedConfig, resolve_config
+from .errors import ERROR_CODES, HighApiError, OperationCancelled
+from .logger import LOG_LEVELS, Logger, LogSink, create_logger, redact_body, redact_url
+from .resources.auth import AsyncAuthResource, AuthResource
+from .resources.market import AsyncMarketResource, MarketResource
+from .resources.orders import AsyncOrdersResource, OrdersResource
+from .resources.portfolio import AsyncPortfolioResource, PortfolioResource
+from .resources.scrips import AsyncScripsResource, ExpiryType, ScripsResource
+
+__version__ = "0.0.1"
+
+__all__ = [
+    "__version__",
+    "HighClient",
+    "AsyncHighClient",
+    "ENVIRONMENTS",
+    "Environment",
+    "HighClientOptions",
+    "ResolvedConfig",
+    "resolve_config",
+    "ERROR_CODES",
+    "HighApiError",
+    "OperationCancelled",
+    "LOG_LEVELS",
+    "Logger",
+    "LogSink",
+    "create_logger",
+    "redact_body",
+    "redact_url",
+    "AuthResource",
+    "AsyncAuthResource",
+    "MarketResource",
+    "AsyncMarketResource",
+    "OrdersResource",
+    "AsyncOrdersResource",
+    "PortfolioResource",
+    "AsyncPortfolioResource",
+    "ScripsResource",
+    "AsyncScripsResource",
+    "ExpiryType",
+]

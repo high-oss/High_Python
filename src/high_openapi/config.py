@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
-from typing import Any, Mapping, Optional, TypedDict
+from typing import Any, Literal, Mapping, Optional, TypedDict
 from weakref import WeakKeyDictionary
 
 from .logger import LOG_LEVELS, Logger, LogSink, create_logger
@@ -26,6 +26,8 @@ ENVIRONMENTS = {
     "production": {"api": "https://openapi.high.live", "ws": "wss://openapi.high.live"},
     "sandbox": {"api": "https://sandbox.high.live", "ws": "wss://sandbox.high.live"},
 }
+
+Environment = Literal["production", "sandbox"]
 
 _DEFAULT_USER_AGENT = "high-sdk-python/0.0.1"
 
