@@ -51,11 +51,13 @@ def _fix_self_named_field_type_clash(text: str) -> str:
     for type_name in clashing_types:
         alias = f"_{type_name.capitalize()}Type"
 
-        # Alias the import: "from datetime import date, datetime" ->
-        # "from datetime import date as _DateType, datetime".
+        # Leave the original import alone — other fields may legitimately use
+        # the bare type name (e.g. Expiry.expiry: date), and renaming the
+        # import would break every one of those. Instead add a standalone
+        # module-level alias right after the import block.
         text = re.sub(
-            rf"^(from [\w.]+ import (?:[^\n]*, )?){type_name}(, | as |$)",
-            rf"\g<1>{type_name} as {alias}\g<2>",
+            rf"^(from [\w.]+ import [^\n]*\b{type_name}\b[^\n]*\n)",
+            rf"\g<1>{alias} = {type_name}\n",
             text,
             count=1,
             flags=re.MULTILINE,
