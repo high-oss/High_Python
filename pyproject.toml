@@ -1,0 +1,36 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "high-openapi"
+version = "0.0.1"
+description = "Official Python SDK for the HIGH Open API."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.9"
+authors = [{ name = "Truestock" }]
+keywords = ["high", "openapi", "trading", "broker", "sdk", "nse", "bse"]
+dependencies = [
+    "httpx>=0.27,<1",
+    "pydantic>=2,<3",
+]
+
+[project.urls]
+Homepage = "https://openapi.high.live"
+Repository = "https://github.com/high-live/high-sdk-python"
+Issues = "https://github.com/high-live/high-sdk-python/issues"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8,<9",
+    "pytest-asyncio>=0.24,<1",
+    "datamodel-code-generator==0.26.3",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/high_openapi"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
