@@ -73,6 +73,15 @@ class HighApiError(Exception):
         self.body = body
 
 
+class OperationCancelled(Exception):
+    """Raised by the sync client when a caller-supplied ``cancel_event`` was
+    set before an attempt was sent, or during a retry delay. Deliberately not
+    a ``HighApiError`` — a cancellation is the caller's own decision, not an
+    API or transport failure, and must never be retried or mistaken for a
+    timeout. The async client instead lets ``asyncio.CancelledError`` from a
+    cancelled task propagate unchanged; this type is its sync equivalent."""
+
+
 def _as_dict(value: Any) -> Optional[dict]:
     return value if isinstance(value, dict) else None
 
