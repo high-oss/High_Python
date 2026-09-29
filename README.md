@@ -11,8 +11,11 @@ pip install high-openapi
 ```
 
 Python 3.9 or newer. Runtime dependencies: [`httpx`](https://www.python-httpx.org/)
-(sync and async transport) and [`pydantic`](https://docs.pydantic.dev/) v2
-(request validation and response models). Nothing else.
+(sync and async transport), [`pydantic`](https://docs.pydantic.dev/) v2
+(request validation and response models), and
+[`websockets`](https://websockets.readthedocs.io/) (the live datafeed client,
+`HighFeed`/`AsyncHighFeed` — see [Live datafeed](#live-datafeed) below).
+Nothing else.
 
 ## Quickstart
 
@@ -54,7 +57,7 @@ owns one pooled `httpx.AsyncClient`. Use them as context managers (`with` /
 |---|---|---|
 | `environment` | `production` | `production` or `sandbox` |
 | `base_url` | from `environment` | Overrides the REST host |
-| `ws_base_url` | from `environment` | Datafeed socket host, reserved for the feed client |
+| `ws_base_url` | from `environment` | Datafeed socket host, used by `HighFeed`/`AsyncHighFeed`. Production-only — `sandbox` resolves this to `None`, since there is no sandbox feed |
 | `version_path` | `v1` | The segment between host and operation path |
 | `api_key` | `HIGH_API_KEY` | Sent as `x-api-key`, for `auth.generate_access_token` |
 | `access_token` | `HIGH_ACCESS_TOKEN` | Sent as `Authorization: Bearer` |
@@ -318,8 +321,133 @@ equities = high.instruments.list("equity", timeout_ms=60_000)
 
 ## Live datafeed
 
-No socket client ships in this release. `ws_base_url` is resolved and exposed
-on `client.config`, but nothing consumes it yet.
+`HighFeed` (sync) and `AsyncHighFeed` (async) are a second pair of clients,
+separate from `HighClient`/`AsyncHighClient`, built from the same options and
+credentials. They stream live quotes, market depth and index ticks over a
+WebSocket.
+
+**Production only.** The feed's host is `openapi-feed.high.live` — there is
+no sandbox feed, so a client resolved to the sandbox environment (whether by
+`environment="sandbox"` or `HIGH_ENVIRONMENT=sandbox`) raises `ValueError` at
+construction, before any socket is opened.
+
+Async — the primary way to consume the feed, one event at a time:
+
+```python
+import asyncio
+from high_openapi import AsyncHighFeed, Depth, IndexTick, Quote
+
+async def main():
+    feed = AsyncHighFeed(access_token=access_token)
+    await feed.connect()
+
+    await feed.subscribe_quotes(["NSE@2885"])     # touchline (market watch)
+    await feed.subscribe_depth(["NSE@2885"])      # five-level market depth
+    await feed.subscribe_indices(["NSE@26000"])   # Nifty 50
+
+    async for event in feed:
+        if isinstance(event, Quote):
+            print(event.scrip_key, event.last_traded_price, sorted(event.changed_fields))
+        elif isinstance(event, Depth):
+            print(event.scrip_key, event.level_count, event.bids[0] if event.bids else None)
+        elif isinstance(event, IndexTick):
+            print(event.scrip_key, event.index_value)
+
+    await feed.close()
+
+asyncio.run(main())
+```
+
+Sync — delivery is by callback:
+
+```python
+from high_openapi import HighFeed
+
+feed = HighFeed(access_token=access_token)
+feed.add_listener(lambda event: print(event))
+feed.connect()
+feed.subscribe_quotes(["NSE@2885"])
+# ... later
+feed.close()
+```
+
+### Subscribing: indices have their own methods
+
+Quotes and depth take ordinary HIGH scrip keys (`NSE@2885`, `BSEFO@842150`,
+...) and are translated to the feed's own instrument identifiers internally —
+nothing feed-specific ever reaches the public surface. Indices are
+subscribed by name rather than token, and share the same `NSE@`/`BSE@`
+prefix as cash scrips, so they get their own dedicated methods rather than a
+`kind` argument that could be gotten wrong silently:
+
+| Method | Accepts |
+|---|---|
+| `subscribe_quotes` / `unsubscribe_quotes` / `snapshot_quotes` | Any non-index scrip key |
+| `subscribe_depth` / `unsubscribe_depth` / `snapshot_depth` | Any non-index scrip key |
+| `subscribe_indices` / `unsubscribe_indices` / `snapshot_indices` | Only a key in the committed index table |
+
+Passing an index key (`NSE@26000`, Nifty 50) to `subscribe_quotes` or
+`subscribe_depth` raises immediately, naming the key and pointing at
+`subscribe_indices` — it is never silently translated by the ordinary prefix
+rule, which would otherwise produce a feed identifier the server does not
+know and simply never tick. The reverse also raises: a non-index key passed
+to `subscribe_indices` names the key and says it is not an index. An
+unsupported or unrecognised key prefix (including MCX spot, which the feed
+does not carry at all) is likewise a clear error naming the key — never a
+silent drop.
+
+### Typed models
+
+Every event carries `scrip_key` — the key you subscribed with, never the
+feed's own identifiers — and `changed_fields`, the set of that event's own
+field names which changed in the tick that produced it (ticks are deltas;
+the SDK merges them into a complete snapshot for you, so every field you
+don't touch just keeps its last known value). Unknown wire fields are kept
+in `extra` rather than dropped. Prices are `Decimal`, never `float`;
+timestamps are naive `datetime` in IST (the feed carries no timezone).
+
+| Model | From | Notes |
+|---|---|---|
+| `Quote` | `subscribe_quotes` | `last_traded_price`, `open`, `high`, `low`, `change`, `change_percent`, `volume`, ... |
+| `Depth` | `subscribe_quotes` *and* `subscribe_depth` | `level_count` is `1` (top-of-book, split out of a quote tick) or `5` (the dedicated depth feed) — a 1-level book is never presented as a 5-level one |
+| `IndexTick` | `subscribe_indices` | `index_value`, `open`, `high`, `low`, `change`, `change_percent` |
+
+A quote subscription can raise **two** kinds of event: `Quote` for the price
+fields, and a 1-level `Depth` for the best bid/ask, whenever the wire tick
+that produced them actually carried each side's fields — a tick that only
+moves the last traded price raises a `Quote` and no `Depth` at all.
+
+### Reconnection
+
+On a transport failure, the client backs off, reconnects, re-authenticates,
+and re-subscribes everything that was subscribed before it reports itself
+connected again — a network blip should never mean a feed that silently
+stops delivering.
+
+A rejected auth (`"stat":"NotOk"` — no active Data API subscription, an
+invalid or expired token, or a malformed request) is different: it is
+**never retried and never reconnected**, because the server will keep
+refusing. It raises `HighFeedAuthError` (or a more specific
+`HighFeedNoDataPlanError`/`HighFeedInvalidTokenError` when the
+acknowledgement's message says so), carrying the gateway's own `st_code` and
+`msg`.
+
+```python
+from high_openapi import HighFeedAuthError, HighFeedKeyError, HighFeedLimitError
+
+try:
+    await feed.connect()
+except HighFeedAuthError as error:
+    print(f"feed auth failed: stCode={error.st_code} msg={error.msg}")
+```
+
+`HighFeedKeyError` (carrying `.key`) covers every translation failure —
+unknown prefix, unsupported segment, an index key on the wrong method, or
+vice versa. `HighFeedLimitError` (carrying `.requested`/`.limit`) is raised
+when a subscription would exceed the connection's own `maxScripPerConn`,
+read off the auth acknowledgement; a subscription within that limit but
+larger than `maxScripPerReq` is split across multiple requests
+automatically.
 
 ## Regenerating from the spec
 

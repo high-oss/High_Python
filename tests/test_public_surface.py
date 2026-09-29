@@ -14,6 +14,31 @@ def test_exports_the_clients_the_error_type_and_the_catalogues():
     assert sdk.ENVIRONMENTS["sandbox"]["api"] == "https://sandbox.high.live"
 
 
+def test_exports_the_datafeed_clients_and_their_typed_models():
+    assert callable(sdk.HighFeed)
+    assert callable(sdk.AsyncHighFeed)
+    assert issubclass(sdk.HighFeedError, Exception)
+    assert issubclass(sdk.HighFeedAuthError, sdk.HighFeedError)
+    assert issubclass(sdk.HighFeedNoDataPlanError, sdk.HighFeedAuthError)
+    assert issubclass(sdk.HighFeedInvalidTokenError, sdk.HighFeedAuthError)
+    assert issubclass(sdk.HighFeedKeyError, sdk.HighFeedError)
+    assert issubclass(sdk.HighFeedLimitError, sdk.HighFeedError)
+    for name in ["Quote", "Depth", "DepthLevel", "IndexTick"]:
+        assert hasattr(sdk, name), f"sdk.{name} is missing"
+
+
+def test_feed_clients_expose_dedicated_methods_per_kind_not_a_generic_kind_argument():
+    for cls in (sdk.HighFeed, sdk.AsyncHighFeed):
+        for name in [
+            "subscribe_quotes", "unsubscribe_quotes", "snapshot_quotes",
+            "subscribe_depth", "unsubscribe_depth", "snapshot_depth",
+            "subscribe_indices", "unsubscribe_indices", "snapshot_indices",
+            "connect", "close",
+        ]:
+            assert callable(getattr(cls, name, None)), f"{cls.__name__}.{name}"
+        assert not hasattr(cls, "subscribe"), f"{cls.__name__}.subscribe should not exist (use the per-kind methods)"
+
+
 def test_wraps_neither_the_browser_login_page_the_consent_flow_nor_introspection():
     client = sdk.HighClient(access_token="tok")
     for name in ["login", "login_url", "render_login", "generate_consent", "consume_consent", "validate_token"]:
@@ -86,5 +111,7 @@ def test_ships_minimal_runtime_dependencies():
     pyproject = tomllib.loads((Path(__file__).resolve().parent.parent / "pyproject.toml").read_text())
     deps = pyproject["project"]["dependencies"]
     names = {d.split(">=")[0].split("<")[0].strip() for d in deps}
-    assert names == {"httpx", "pydantic"}
+    # websockets is the one dependency the datafeed client adds — see the
+    # datafeed plan's "one WebSocket library per SDK" constraint.
+    assert names == {"httpx", "pydantic", "websockets"}
     assert pyproject["project"]["name"] == "high-openapi"

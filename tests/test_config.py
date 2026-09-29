@@ -20,7 +20,19 @@ def test_maps_the_sandbox_environment_to_its_host():
 
 def test_resolves_a_websocket_host_alongside_the_api_host():
     assert resolve_config({}, env={}).ws_base_url == ENVIRONMENTS["production"]["ws"]
-    assert resolve_config({"environment": "sandbox"}, env={}).ws_base_url == ENVIRONMENTS["sandbox"]["ws"]
+    assert resolve_config({}, env={}).ws_base_url == "wss://openapi-feed.high.live"
+
+
+def test_sandbox_has_no_websocket_host_there_is_no_sandbox_feed():
+    # ENVIRONMENTS["sandbox"] deliberately carries no "ws" entry — see
+    # config.py and the datafeed plan/contract §9.
+    assert "ws" not in ENVIRONMENTS["sandbox"]
+    assert resolve_config({"environment": "sandbox"}, env={}).ws_base_url is None
+
+
+def test_exposes_the_resolved_environment_name():
+    assert resolve_config({}, env={}).environment == "production"
+    assert resolve_config({"environment": "sandbox"}, env={}).environment == "sandbox"
 
 
 def test_lets_ws_base_url_be_overridden_without_touching_base_url():
@@ -111,7 +123,10 @@ def test_explicit_environment_beats_high_ws_base_url_too():
         env={"HIGH_BASE_URL": "https://openapi.high.live", "HIGH_WS_BASE_URL": "wss://openapi.high.live"},
     )
     assert config.base_url == ENVIRONMENTS["sandbox"]["api"]
-    assert config.ws_base_url == ENVIRONMENTS["sandbox"]["ws"]
+    # Suppressed just like HIGH_BASE_URL — and sandbox has no "ws" host to
+    # fall back to regardless, so this stays None rather than picking up
+    # the env var or borrowing production's.
+    assert config.ws_base_url is None
 
 
 def test_high_base_url_still_applies_when_no_environment_given():

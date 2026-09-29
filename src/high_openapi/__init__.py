@@ -6,6 +6,20 @@
 from .client import AsyncHighClient, HighClient
 from .config import ENVIRONMENTS, Environment, HighClientOptions, ResolvedConfig, resolve_config
 from .errors import ERROR_CODES, HighApiError, OperationCancelled
+from .feed import (
+    AsyncHighFeed,
+    Depth,
+    DepthLevel,
+    HighFeed,
+    HighFeedAuthError,
+    HighFeedError,
+    HighFeedInvalidTokenError,
+    HighFeedKeyError,
+    HighFeedLimitError,
+    HighFeedNoDataPlanError,
+    IndexTick,
+    Quote,
+)
 from .logger import LOG_LEVELS, Logger, LogSink, create_logger, redact_body, redact_url
 from .resources.auth import AsyncAuthResource, AuthResource
 from .resources.instruments import AsyncInstrumentsResource, InstrumentCategory, InstrumentRow, InstrumentsResource
@@ -49,4 +63,16 @@ __all__ = [
     "ScripsResource",
     "AsyncScripsResource",
     "ExpiryType",
+    "AsyncHighFeed",
+    "HighFeed",
+    "HighFeedError",
+    "HighFeedAuthError",
+    "HighFeedNoDataPlanError",
+    "HighFeedInvalidTokenError",
+    "HighFeedKeyError",
+    "HighFeedLimitError",
+    "Quote",
+    "Depth",
+    "DepthLevel",
+    "IndexTick",
 ]

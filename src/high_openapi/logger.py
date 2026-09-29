@@ -149,6 +149,9 @@ def redact_url(url: str) -> str:
 _SENSITIVE_KEYS = {
     "tOtp", "totp", "otp", "apiKey", "accessToken", "refreshToken",
     "tokenId", "stepToken", "password", "pin", "authorization",
+    # The datafeed socket's auth frame credential (feed/client.py):
+    # {"type": "cn", "sessionid": "<access token>"}.
+    "sessionid",
 }
 
 # Above this many characters of serialised JSON, a logged payload is replaced

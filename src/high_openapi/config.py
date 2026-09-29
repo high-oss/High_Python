@@ -23,8 +23,14 @@ from weakref import WeakKeyDictionary
 from .logger import LOG_LEVELS, Logger, LogSink, create_logger
 
 ENVIRONMENTS = {
-    "production": {"api": "https://openapi.high.live", "ws": "wss://openapi.high.live"},
-    "sandbox": {"api": "https://sandbox.high.live", "ws": "wss://sandbox.high.live"},
+    # The datafeed socket is production-only — its own host, not a path on
+    # the REST host — see the datafeed plan and contract §9. The sandbox
+    # entry deliberately carries no "ws" key: there is no sandbox feed, so
+    # resolve_config() below leaves ws_base_url unset for it rather than
+    # inventing a host nothing serves, and HighFeed/AsyncHighFeed refuse to
+    # construct at all when the resolved environment is "sandbox".
+    "production": {"api": "https://openapi.high.live", "ws": "wss://openapi-feed.high.live"},
+    "sandbox": {"api": "https://sandbox.high.live"},
 }
 
 Environment = Literal["production", "sandbox"]
@@ -73,8 +79,14 @@ class ResolvedConfig:
     a new access token means a new client, never a mutation in place."""
 
     base_url: str
-    # Reserved for the datafeed client. Unused by the REST resources.
-    ws_base_url: str
+    # The resolved environment name — "production" or "sandbox". Exists
+    # mainly so HighFeed/AsyncHighFeed can refuse sandbox outright at
+    # construction (there is no sandbox feed) without re-deriving it from
+    # base_url/ws_base_url, which callers are free to override independently.
+    environment: str
+    # Used by the datafeed client (HighFeed/AsyncHighFeed). None for a
+    # sandbox-resolved config with no override — see ENVIRONMENTS above.
+    ws_base_url: Optional[str]
     version_path: str
     timeout_ms: float
     max_retries: int
@@ -149,8 +161,10 @@ def resolve_config(
     base_url = options.get("base_url") or (
         hosts["api"] if explicit_environment else (env.get("HIGH_BASE_URL") or hosts["api"])
     )
+    # hosts.get("ws"): sandbox carries no "ws" entry (there is no sandbox
+    # feed), so this is None there unless ws_base_url is given explicitly.
     ws_base_url = options.get("ws_base_url") or (
-        hosts["ws"] if explicit_environment else (env.get("HIGH_WS_BASE_URL") or hosts["ws"])
+        hosts.get("ws") if explicit_environment else (env.get("HIGH_WS_BASE_URL") or hosts.get("ws"))
     )
 
     user_agent = (
@@ -174,7 +188,8 @@ def resolve_config(
 
     config = ResolvedConfig(
         base_url=base_url.rstrip("/"),
-        ws_base_url=ws_base_url.rstrip("/"),
+        environment=environment,
+        ws_base_url=ws_base_url.rstrip("/") if ws_base_url else None,
         version_path=_trim_slashes(options.get("version_path", "v1")),
         timeout_ms=timeout_ms,
         max_retries=max_retries,

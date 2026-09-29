@@ -46,12 +46,40 @@ First release. Pre-1.0: the surface may still change.
   as reported, never rescaled. Takes an optional per-call `timeout_ms` for
   the larger categories. A new `instrument_allowed_hosts` client option
   restricts which hosts the CSV may be downloaded from.
+- `HighFeed` (sync) / `AsyncHighFeed` (async): the live datafeed client, a
+  second pair of clients beside `HighClient`/`AsyncHighClient`, built from
+  the same options. Production only (`openapi-feed.high.live`) — a client
+  resolved to `sandbox` raises `ValueError` at construction, since there is
+  no sandbox feed. Auth (`{"type":"cn","sessionid":...}`, no caller-settable
+  `mode`) is a gate: nothing else is sent until its acknowledgement arrives,
+  and a rejected auth (`HighFeedAuthError`, with `HighFeedNoDataPlanError`/
+  `HighFeedInvalidTokenError` subtypes) is never retried or reconnected.
+  `subscribe_quotes`/`subscribe_depth`/`subscribe_indices` (plus
+  `unsubscribe_*`/`snapshot_*`) take HIGH scrip keys only; indices get their
+  own methods and are validated both ways against the committed index table
+  (`scripts/regenerate_index_map.py`, `src/high_openapi/feed/_index_map.py`,
+  rendered from the canonical `index-feed-map.json`'s 93 rows — 87 after
+  resolving 6 scripKeys the source lists twice with conflicting symbols;
+  last row wins, consistently with how every SDK renders the same file) —
+  an index key on the quote/depth methods, or a non-index key on the index
+  methods, raises `HighFeedKeyError` naming the key. `maxScripPerConn`/`maxScripPerReq` from
+  the auth acknowledgement are honoured, splitting large subscriptions and
+  raising `HighFeedLimitError` rather than exceeding the connection cap.
+  Ticks are deltas, merged into typed `Quote`/`Depth`/`IndexTick` snapshots
+  keyed by the caller's own scrip key, with `changed_fields`, `Decimal`
+  prices, per-field timestamp parsing, and unknown fields preserved in
+  `extra`. A FULL-mode quote tick's top-of-book fields are split into a
+  separate one-level `Depth` event, never presented as the five-level book
+  the dedicated depth feed carries. Reconnects on transport failure only,
+  with backoff, re-authenticating and fully re-subscribing before reporting
+  connected again. Delivery: `async for event in feed` on `AsyncHighFeed`;
+  `feed.add_listener(callback)` on the synchronous `HighFeed`. The one new
+  runtime dependency this adds is `websockets`.
 
 ### Notes
 
 - The redirect consent flow and token introspection are not wrapped. Auth is
   the TOTP endpoint only.
-- No datafeed socket client. `ws_base_url` is resolved but unused.
 - Models are generated with `datamodel-code-generator`, not
   `openapi-python-client` — the latter only emits `attrs` dataclasses and
   cannot produce the pydantic v2 models this SDK's stack requires. See
