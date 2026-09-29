@@ -28,12 +28,31 @@ class HighFeedKeyError(HighFeedError):
     not cover (MCX spot), an index key missing from the committed table, an
     index key passed to ``subscribe_quotes``/``subscribe_depth`` (must use
     ``subscribe_indices``), and a non-index key passed to
-    ``subscribe_indices``.
+    ``subscribe_indices``. See :class:`HighFeedAmbiguousIndexError` for the
+    fourth, more specific case.
     """
 
     def __init__(self, message: str, *, key: str) -> None:
         super().__init__(message)
         self.key = key
+
+
+class HighFeedAmbiguousIndexError(HighFeedKeyError):
+    """A scrip key the scrip master maps to more than one distinct index —
+    a confirmed data defect, not a translation bug (six keys, as of this
+    writing; see ``feed/_index_map.py``'s ``AMBIGUOUS_INDEX_KEYS``).
+
+    Deliberately never resolved automatically. Any resolution — first
+    match, last match, alphabetical — is a coin flip a caller cannot detect:
+    the wrong index streams under the right scrip key, with plausible-looking
+    prices, and nothing about the response says so. Raising by name, with
+    both candidates, is the only safe behaviour until the scrip master's own
+    data is fixed upstream.
+    """
+
+    def __init__(self, message: str, *, key: str, candidates) -> None:
+        super().__init__(message, key=key)
+        self.candidates = tuple(candidates)
 
 
 class HighFeedLimitError(HighFeedError):

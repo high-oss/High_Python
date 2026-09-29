@@ -396,6 +396,14 @@ unsupported or unrecognised key prefix (including MCX spot, which the feed
 does not carry at all) is likewise a clear error naming the key — never a
 silent drop.
 
+A handful of scripKeys (six, as of this writing) are a confirmed defect in
+the scrip master itself: the same key maps to two genuinely different
+indices. Those are excluded from the index table entirely and raise
+`HighFeedAmbiguousIndexError` — naming both candidates — from every method,
+quote/depth included. There is no resolution this SDK can guess at safely:
+either candidate would stream under the caller's scrip key with entirely
+plausible-looking prices, so a silently wrong pick would never be noticed.
+
 ### Typed models
 
 Every event carries `scrip_key` — the key you subscribed with, never the
@@ -443,7 +451,9 @@ except HighFeedAuthError as error:
 
 `HighFeedKeyError` (carrying `.key`) covers every translation failure —
 unknown prefix, unsupported segment, an index key on the wrong method, or
-vice versa. `HighFeedLimitError` (carrying `.requested`/`.limit`) is raised
+vice versa. Its subtype `HighFeedAmbiguousIndexError` (carrying `.candidates`
+too) is raised instead for one of the six scripKeys the scrip master maps to
+more than one index. `HighFeedLimitError` (carrying `.requested`/`.limit`) is raised
 when a subscription would exceed the connection's own `maxScripPerConn`,
 read off the auth acknowledgement; a subscription within that limit but
 larger than `maxScripPerReq` is split across multiple requests

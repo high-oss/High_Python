@@ -6,20 +6,17 @@
 # Rendered from High/sdk/index-feed-map.json by
 # scripts/regenerate_index_map.py. That file is the canonical, hand-joined
 # table of every HIGH index scrip key the feed carries — see the datafeed
-# plan, Phase 1. Regenerate and commit both together; do not hand-edit this
-# module. tests/test_feed_index_map.py rebuilds this table from the source
-# JSON (when it is reachable) and asserts this module still matches it.
+# plan, Phase 1. Regenerate and commit both together (and the refreshed
+# tests/fixtures/index-feed-map.json copy); do not hand-edit this module.
+# tests/test_feed_index_map.py rebuilds this table from that fixture and
+# asserts this module still matches it.
 #
-# 93 rows in the source; 87 unique scripKeys below.
-#
-# 6 scripKey(s) appear more than once in the source, with different feedSymbol values. The LAST occurrence in the source array wins (see this script's
-# render() docstring comment) - listed here so the resolution is not silent:
-#   NSE@26002: 'Nifty FMCG' (dropped) -> 'Nifty50 PR 2x Lev' (kept)
-#   NSE@26020: 'Nifty Energy' (dropped) -> 'Nifty PSU Bank' (kept)
-#   NSE@26034: 'Nifty Div Opps 50' (dropped) -> 'Nifty Metal' (kept)
-#   NSE@26040: 'Nifty Commodities' (dropped) -> 'Nifty100 Liq 15' (kept)
-#   NSE@26044: 'NIFTY MIDCAP 100' (dropped) -> 'Nifty50 TR 1x Inv' (kept)
-#   NSE@26046: 'Nifty Mid Liq 15' (dropped) -> 'NIFTY SMLCAP 100' (kept)
+# 81 unambiguous entries (INDEX_FEED_MAP).
+# 6 scripKeys the scrip master shares between two different
+# indices — a confirmed data defect, not a rendering artefact. Deliberately
+# excluded from INDEX_FEED_MAP and listed in AMBIGUOUS_INDEX_KEYS instead, so
+# subscribing to one raises naming both candidates rather than silently
+# resolving to whichever one happened to win a tie-break.
 
 from __future__ import annotations
 
@@ -67,8 +64,6 @@ INDEX_FEED_MAP: Dict[str, Tuple[str, str]] = {
     'NSE@25998': ('nse_cm', 'Nifty 500'),
     'NSE@26000': ('nse_cm', 'Nifty 50'),
     'NSE@26001': ('nse_cm', 'Nifty GrowSect 15'),
-    'NSE@26002': ('nse_cm', 'Nifty FMCG'),
-    'NSE@26002': ('nse_cm', 'Nifty50 PR 2x Lev'),
     'NSE@26008': ('nse_cm', 'Nifty IT'),
     'NSE@26009': ('nse_cm', 'Nifty Bank'),
     'NSE@26012': ('nse_cm', 'Nifty 100'),
@@ -77,28 +72,18 @@ INDEX_FEED_MAP: Dict[str, Tuple[str, str]] = {
     'NSE@26017': ('nse_cm', 'India VIX'),
     'NSE@26018': ('nse_cm', 'Nifty Pharma'),
     'NSE@26019': ('nse_cm', 'Nifty Infra'),
-    'NSE@26020': ('nse_cm', 'Nifty Energy'),
-    'NSE@26020': ('nse_cm', 'Nifty PSU Bank'),
     'NSE@26021': ('nse_cm', 'Nifty Realty'),
     'NSE@26022': ('nse_cm', 'Nifty MNC'),
     'NSE@26024': ('nse_cm', 'Nifty PSE'),
     'NSE@26026': ('nse_cm', 'Nifty Serv Sector'),
     'NSE@26033': ('nse_cm', 'Nifty Auto'),
-    'NSE@26034': ('nse_cm', 'Nifty Div Opps 50'),
-    'NSE@26034': ('nse_cm', 'Nifty Metal'),
     'NSE@26035': ('nse_cm', 'Nifty Consumption'),
     'NSE@26036': ('nse_cm', 'Nifty 200'),
     'NSE@26037': ('nse_cm', 'Nifty Fin Service'),
     'NSE@26038': ('nse_cm', 'Nifty50 Div Point'),
-    'NSE@26040': ('nse_cm', 'Nifty Commodities'),
-    'NSE@26040': ('nse_cm', 'Nifty100 Liq 15'),
     'NSE@26041': ('nse_cm', 'Nifty CPSE'),
     'NSE@26042': ('nse_cm', 'Nifty50 PR 1x Inv'),
     'NSE@26043': ('nse_cm', 'Nifty50 TR 2x Lev'),
-    'NSE@26044': ('nse_cm', 'NIFTY MIDCAP 100'),
-    'NSE@26044': ('nse_cm', 'Nifty50 TR 1x Inv'),
-    'NSE@26046': ('nse_cm', 'Nifty Mid Liq 15'),
-    'NSE@26046': ('nse_cm', 'NIFTY SMLCAP 100'),
     'NSE@26048': ('nse_cm', 'NIFTY100 Qualty30'),
     'NSE@26049': ('nse_cm', 'Nifty GS 8 13Yr'),
     'NSE@26050': ('nse_cm', 'Nifty GS 10Yr'),
@@ -120,4 +105,14 @@ INDEX_FEED_MAP: Dict[str, Tuple[str, str]] = {
     'NSE@26092': ('nse_cm', 'NIFTY SMLCAP 250'),
     'NSE@26093': ('nse_cm', 'NIFTY MIDSML 400'),
     'NSE@26094': ('nse_cm', 'NIFTY200 QUALTY30'),
+}
+
+# scripKey -> the two (or more) index names the scrip master maps it to.
+AMBIGUOUS_INDEX_KEYS: Dict[str, Tuple[str, ...]] = {
+    'NSE@26002': ('Nifty FMCG', 'Nifty50 PR 2x Lev'),
+    'NSE@26020': ('Nifty Energy', 'Nifty PSU Bank'),
+    'NSE@26034': ('Nifty Div Opps 50', 'Nifty Metal'),
+    'NSE@26040': ('Nifty Commodities', 'Nifty100 Liq 15'),
+    'NSE@26044': ('NIFTY MIDCAP 100', 'Nifty50 TR 1x Inv'),
+    'NSE@26046': ('NIFTY SMLCAP 100', 'Nifty Mid Liq 15'),
 }

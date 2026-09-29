@@ -58,11 +58,15 @@ First release. Pre-1.0: the surface may still change.
   `unsubscribe_*`/`snapshot_*`) take HIGH scrip keys only; indices get their
   own methods and are validated both ways against the committed index table
   (`scripts/regenerate_index_map.py`, `src/high_openapi/feed/_index_map.py`,
-  rendered from the canonical `index-feed-map.json`'s 93 rows — 87 after
-  resolving 6 scripKeys the source lists twice with conflicting symbols;
-  last row wins, consistently with how every SDK renders the same file) —
-  an index key on the quote/depth methods, or a non-index key on the index
-  methods, raises `HighFeedKeyError` naming the key. `maxScripPerConn`/`maxScripPerReq` from
+  rendered from the canonical `index-feed-map.json`, 81 unambiguous entries)
+  — an index key on the quote/depth methods, or a non-index key on the
+  index methods, raises `HighFeedKeyError` naming the key. Six scripKeys the
+  live scrip master maps to two genuinely different indices each (a
+  confirmed data defect) are excluded from the table entirely and raise the
+  more specific `HighFeedAmbiguousIndexError`, naming both candidates,
+  rather than resolving to either one — a silently wrong pick would look
+  like a normal, plausibly-priced tick and never be noticed.
+  `maxScripPerConn`/`maxScripPerReq` from
   the auth acknowledgement are honoured, splitting large subscriptions and
   raising `HighFeedLimitError` rather than exceeding the connection cap.
   Ticks are deltas, merged into typed `Quote`/`Depth`/`IndexTick` snapshots

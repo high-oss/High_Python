@@ -22,7 +22,13 @@ from decimal import Decimal
 import pytest
 
 from high_openapi.feed import AsyncHighFeed, Depth, HighFeed, IndexTick, Quote
-from high_openapi.feed.errors import HighFeedAuthError, HighFeedError, HighFeedKeyError, HighFeedLimitError
+from high_openapi.feed.errors import (
+    HighFeedAmbiguousIndexError,
+    HighFeedAuthError,
+    HighFeedError,
+    HighFeedKeyError,
+    HighFeedLimitError,
+)
 
 from .feed_server import not_ok_ack, ok_ack, start_feed_server
 
@@ -259,6 +265,34 @@ class TestIndexVsEquityTranslationOverTheWire:
             await feed.connect()
             with pytest.raises(HighFeedKeyError, match="NSE@2885"):
                 await feed.subscribe_indices(["NSE@2885"])
+            await feed.close()
+        finally:
+            server.close()
+
+    async def test_an_ambiguous_key_is_rejected_by_subscribe_indices_naming_both_candidates(self):
+        server = start_feed_server(auth_response=lambda frame: ok_ack())
+        try:
+            feed = AsyncHighFeed(access_token="tok", ws_base_url=server.url)
+            await feed.connect()
+            with pytest.raises(HighFeedAmbiguousIndexError) as exc_info:
+                await feed.subscribe_indices(["NSE@26002"])
+            assert exc_info.value.candidates == ("Nifty FMCG", "Nifty50 PR 2x Lev")
+            await asyncio.sleep(0.1)
+            assert _frames_of_type(server, "ifs") == []  # nothing sent — never a guess
+            await feed.close()
+        finally:
+            server.close()
+
+    async def test_an_ambiguous_key_is_also_rejected_by_subscribe_quotes(self):
+        # Not silently treated as a plain token (nse_cm|26002) either.
+        server = start_feed_server(auth_response=lambda frame: ok_ack())
+        try:
+            feed = AsyncHighFeed(access_token="tok", ws_base_url=server.url)
+            await feed.connect()
+            with pytest.raises(HighFeedKeyError, match="NSE@26002"):
+                await feed.subscribe_quotes(["NSE@26002"])
+            await asyncio.sleep(0.1)
+            assert _frames_of_type(server, "mws") == []
             await feed.close()
         finally:
             server.close()

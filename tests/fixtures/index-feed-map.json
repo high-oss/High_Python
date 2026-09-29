@@ -1,0 +1,536 @@
+{
+  "note": "Generated. Do not hand-edit. Built by joining scrip-master-equity.csv index rows to the feed vendor index lists on a normalised name.",
+  "ambiguousNote": "scripKeys under ambiguous resolve to more than one index in the scrip master (one token, two indices). They are deliberately EXCLUDED from indices: subscribing to one must fail with a clear error rather than silently streaming whichever index won a tie-break.",
+  "indices": [
+    {
+      "scripKey": "BSE@19000",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "SENSEX",
+      "name": "SENSEX"
+    },
+    {
+      "scripKey": "BSE@19001",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "BSEPSU",
+      "name": "BSEPSU"
+    },
+    {
+      "scripKey": "BSE@19002",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "BSE100",
+      "name": "BSE100"
+    },
+    {
+      "scripKey": "BSE@19003",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "BSE200",
+      "name": "BSE200"
+    },
+    {
+      "scripKey": "BSE@19004",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "BSE500",
+      "name": "BSE500"
+    },
+    {
+      "scripKey": "BSE@19005",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "BSE IT",
+      "name": "BSE IT"
+    },
+    {
+      "scripKey": "BSE@19006",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "BSEFMC",
+      "name": "BSEFMC"
+    },
+    {
+      "scripKey": "BSE@19007",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "BSE CG",
+      "name": "BSE CG"
+    },
+    {
+      "scripKey": "BSE@19008",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "BSE CD",
+      "name": "BSE CD"
+    },
+    {
+      "scripKey": "BSE@19009",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "BSE HC",
+      "name": "BSE HC"
+    },
+    {
+      "scripKey": "BSE@19011",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "TECK",
+      "name": "TECK"
+    },
+    {
+      "scripKey": "BSE@19012",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "BANKEX",
+      "name": "BANKEX"
+    },
+    {
+      "scripKey": "BSE@19013",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "AUTO",
+      "name": "AUTO"
+    },
+    {
+      "scripKey": "BSE@19014",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "METAL",
+      "name": "METAL"
+    },
+    {
+      "scripKey": "BSE@19015",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "CPSE",
+      "name": "CPSE"
+    },
+    {
+      "scripKey": "BSE@19016",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "MIDCAP",
+      "name": "MIDCAP"
+    },
+    {
+      "scripKey": "BSE@19017",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "SMLCAP",
+      "name": "SMLCAP"
+    },
+    {
+      "scripKey": "BSE@19019",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "DOL100",
+      "name": "DOL100"
+    },
+    {
+      "scripKey": "BSE@19020",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "DOL200",
+      "name": "DOL200"
+    },
+    {
+      "scripKey": "BSE@19051",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "OILGAS",
+      "name": "OILGAS"
+    },
+    {
+      "scripKey": "BSE@19052",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "POWER",
+      "name": "POWER"
+    },
+    {
+      "scripKey": "BSE@19053",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "REALTY",
+      "name": "REALTY"
+    },
+    {
+      "scripKey": "BSE@19054",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "BSEIPO",
+      "name": "BSEIPO"
+    },
+    {
+      "scripKey": "BSE@19059",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "SMEIPO",
+      "name": "SMEIPO"
+    },
+    {
+      "scripKey": "BSE@19060",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "INFRA",
+      "name": "INFRA"
+    },
+    {
+      "scripKey": "BSE@19089",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "LMI250",
+      "name": "LMI250"
+    },
+    {
+      "scripKey": "BSE@39",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "ENERGY",
+      "name": "ENERGY"
+    },
+    {
+      "scripKey": "BSE@40",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "FINSER",
+      "name": "FINSER"
+    },
+    {
+      "scripKey": "BSE@41",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "INDSTR",
+      "name": "INDSTR"
+    },
+    {
+      "scripKey": "BSE@42",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "LRGCAP",
+      "name": "LRGCAP"
+    },
+    {
+      "scripKey": "BSE@43",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "MIDSEL",
+      "name": "MIDSEL"
+    },
+    {
+      "scripKey": "BSE@44",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "SMLSEL",
+      "name": "SMLSEL"
+    },
+    {
+      "scripKey": "BSE@45",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "TELCOM",
+      "name": "TELCOM"
+    },
+    {
+      "scripKey": "BSE@47",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "SNSX50",
+      "name": "SNSX50"
+    },
+    {
+      "scripKey": "BSE@48",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "SNXT50",
+      "name": "SNXT50"
+    },
+    {
+      "scripKey": "BSE@55",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "MID150",
+      "name": "MID150"
+    },
+    {
+      "scripKey": "BSE@58",
+      "feedSegment": "bse_cm",
+      "feedSymbol": "MSL400",
+      "name": "MSL400"
+    },
+    {
+      "scripKey": "NSE@25998",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "Nifty 500",
+      "name": "NIFTY 500"
+    },
+    {
+      "scripKey": "NSE@26000",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "Nifty 50",
+      "name": "NIFTY 50"
+    },
+    {
+      "scripKey": "NSE@26001",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "Nifty GrowSect 15",
+      "name": "NIFTY GROWSECT 15"
+    },
+    {
+      "scripKey": "NSE@26008",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "Nifty IT",
+      "name": "NIFTY IT"
+    },
+    {
+      "scripKey": "NSE@26009",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "Nifty Bank",
+      "name": "NIFTY BANK"
+    },
+    {
+      "scripKey": "NSE@26012",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "Nifty 100",
+      "name": "NIFTY 100"
+    },
+    {
+      "scripKey": "NSE@26013",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "Nifty Next 50",
+      "name": "NIFTY NEXT 50"
+    },
+    {
+      "scripKey": "NSE@26014",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "Nifty Midcap 50",
+      "name": "NIFTY MIDCAP 50"
+    },
+    {
+      "scripKey": "NSE@26017",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "India VIX",
+      "name": "INDIA VIX"
+    },
+    {
+      "scripKey": "NSE@26018",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "Nifty Pharma",
+      "name": "NIFTY PHARMA"
+    },
+    {
+      "scripKey": "NSE@26019",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "Nifty Infra",
+      "name": "NIFTY INFRA"
+    },
+    {
+      "scripKey": "NSE@26021",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "Nifty Realty",
+      "name": "NIFTY REALTY"
+    },
+    {
+      "scripKey": "NSE@26022",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "Nifty MNC",
+      "name": "NIFTY MNC"
+    },
+    {
+      "scripKey": "NSE@26024",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "Nifty PSE",
+      "name": "NIFTY PSE"
+    },
+    {
+      "scripKey": "NSE@26026",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "Nifty Serv Sector",
+      "name": "NIFTY SERV SECTOR"
+    },
+    {
+      "scripKey": "NSE@26033",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "Nifty Auto",
+      "name": "NIFTY AUTO"
+    },
+    {
+      "scripKey": "NSE@26035",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "Nifty Consumption",
+      "name": "NIFTY CONSUMPTION"
+    },
+    {
+      "scripKey": "NSE@26036",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "Nifty 200",
+      "name": "NIFTY 200"
+    },
+    {
+      "scripKey": "NSE@26037",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "Nifty Fin Service",
+      "name": "NIFTY FIN SERVICE"
+    },
+    {
+      "scripKey": "NSE@26038",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "Nifty50 Div Point",
+      "name": "NIFTY50 DIV POINT"
+    },
+    {
+      "scripKey": "NSE@26041",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "Nifty CPSE",
+      "name": "NIFTY CPSE"
+    },
+    {
+      "scripKey": "NSE@26042",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "Nifty50 PR 1x Inv",
+      "name": "NIFTY50 PR 1X INV"
+    },
+    {
+      "scripKey": "NSE@26043",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "Nifty50 TR 2x Lev",
+      "name": "NIFTY50 TR 2X LEV"
+    },
+    {
+      "scripKey": "NSE@26048",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "NIFTY100 Qualty30",
+      "name": "NIFTY100 QUALTY30"
+    },
+    {
+      "scripKey": "NSE@26049",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "Nifty GS 8 13Yr",
+      "name": "NIFTY GS 8 13YR"
+    },
+    {
+      "scripKey": "NSE@26050",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "Nifty GS 10Yr",
+      "name": "NIFTY GS 10YR"
+    },
+    {
+      "scripKey": "NSE@26051",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "Nifty GS 10Yr Cln",
+      "name": "NIFTY GS 10YR CLN"
+    },
+    {
+      "scripKey": "NSE@26052",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "Nifty GS 4 8Yr",
+      "name": "NIFTY GS 4 8YR"
+    },
+    {
+      "scripKey": "NSE@26053",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "Nifty GS 11 15Yr",
+      "name": "NIFTY GS 11 15YR"
+    },
+    {
+      "scripKey": "NSE@26054",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "Nifty GS 15YrPlus",
+      "name": "NIFTY GS 15YRPLUS"
+    },
+    {
+      "scripKey": "NSE@26055",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "Nifty GS Compsite",
+      "name": "NIFTY GS COMPSITE"
+    },
+    {
+      "scripKey": "NSE@26056",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "NIFTY50 EQL Wgt",
+      "name": "NIFTY50 EQL WGT"
+    },
+    {
+      "scripKey": "NSE@26057",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "NIFTY100 EQL Wgt",
+      "name": "NIFTY100 EQL WGT"
+    },
+    {
+      "scripKey": "NSE@26058",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "NIFTY100 LowVol30",
+      "name": "NIFTY100 LOWVOL30"
+    },
+    {
+      "scripKey": "NSE@26059",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "NIFTY Alpha 50",
+      "name": "NIFTY ALPHA 50"
+    },
+    {
+      "scripKey": "NSE@26070",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "Nifty50 Value 20",
+      "name": "NIFTY50 VALUE 20"
+    },
+    {
+      "scripKey": "NSE@26074",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "NIFTY MID SELECT",
+      "name": "NIFTY MID SELECT"
+    },
+    {
+      "scripKey": "NSE@26076",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "Nifty Pvt Bank",
+      "name": "NIFTY PVT BANK"
+    },
+    {
+      "scripKey": "NSE@26085",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "Nifty Media",
+      "name": "NIFTY MEDIA"
+    },
+    {
+      "scripKey": "NSE@26090",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "NIFTY MIDCAP 150",
+      "name": "NIFTY MIDCAP 150"
+    },
+    {
+      "scripKey": "NSE@26091",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "NIFTY SMLCAP 50",
+      "name": "NIFTY SMLCAP 50"
+    },
+    {
+      "scripKey": "NSE@26092",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "NIFTY SMLCAP 250",
+      "name": "NIFTY SMLCAP 250"
+    },
+    {
+      "scripKey": "NSE@26093",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "NIFTY MIDSML 400",
+      "name": "NIFTY MIDSML 400"
+    },
+    {
+      "scripKey": "NSE@26094",
+      "feedSegment": "nse_cm",
+      "feedSymbol": "NIFTY200 QUALTY30",
+      "name": "NIFTY200 QUALTY30"
+    }
+  ],
+  "ambiguous": [
+    {
+      "scripKey": "NSE@26002",
+      "candidates": [
+        "Nifty FMCG",
+        "Nifty50 PR 2x Lev"
+      ]
+    },
+    {
+      "scripKey": "NSE@26020",
+      "candidates": [
+        "Nifty Energy",
+        "Nifty PSU Bank"
+      ]
+    },
+    {
+      "scripKey": "NSE@26034",
+      "candidates": [
+        "Nifty Div Opps 50",
+        "Nifty Metal"
+      ]
+    },
+    {
+      "scripKey": "NSE@26040",
+      "candidates": [
+        "Nifty Commodities",
+        "Nifty100 Liq 15"
+      ]
+    },
+    {
+      "scripKey": "NSE@26044",
+      "candidates": [
+        "NIFTY MIDCAP 100",
+        "Nifty50 TR 1x Inv"
+      ]
+    },
+    {
+      "scripKey": "NSE@26046",
+      "candidates": [
+        "NIFTY SMLCAP 100",
+        "Nifty Mid Liq 15"
+      ]
+    }
+  ]
+}

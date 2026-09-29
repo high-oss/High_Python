@@ -4,16 +4,18 @@
 """Key translation (datafeed plan, Phase 1) — pure, no socket involved.
 
 Covers: the index table running first, the prefix rule for every supported
-segment, MCX spot's explicit non-support, an unknown prefix, and the
-two-way rejection the coordinator's surface change asked for — an index key
-must not reach the quote/depth prefix rule (it would silently produce a
-token the feed does not know), and a non-index key must not reach
-``subscribe_indices``.
+segment, MCX spot's explicit non-support, an unknown prefix, the two-way
+rejection the coordinator's surface change asked for — an index key must
+not reach the quote/depth prefix rule (it would silently produce a token
+the feed does not know), and a non-index key must not reach
+``subscribe_indices`` — and the third rejection: a scrip key the live scrip
+master maps to more than one different index, which must never be resolved
+automatically in either direction.
 """
 
 import pytest
 
-from high_openapi.feed.errors import HighFeedKeyError
+from high_openapi.feed.errors import HighFeedAmbiguousIndexError, HighFeedKeyError
 from high_openapi.feed.translate import is_index_key, translate_index, translate_instrument
 
 
@@ -68,6 +70,49 @@ class TestIndexTable:
     def test_is_index_key_helper(self):
         assert is_index_key("NSE@26000") is True
         assert is_index_key("NSE@2885") is False
+
+    def test_is_index_key_is_also_true_for_an_ambiguous_key(self):
+        # A key can be "an index" (should never fall through to the plain
+        # token prefix rule) without being *resolvable* — see
+        # TestAmbiguousIndexKeys below.
+        assert is_index_key("NSE@26002") is True
+
+
+class TestAmbiguousIndexKeys:
+    """A confirmed data defect, not a translation bug: the live scrip
+    master maps these six scripKeys to two different indices each. Neither
+    direction may resolve one automatically — a coin flip that looks like a
+    real, plausibly-priced index tick is worse than a loud error."""
+
+    def test_translate_index_names_the_key_and_both_candidates(self):
+        with pytest.raises(HighFeedAmbiguousIndexError) as exc_info:
+            translate_index("NSE@26002")
+        error = exc_info.value
+        assert error.key == "NSE@26002"
+        assert error.candidates == ("Nifty FMCG", "Nifty50 PR 2x Lev")
+        assert "Nifty FMCG" in str(error)
+        assert "Nifty50 PR 2x Lev" in str(error)
+
+    def test_is_a_high_feed_key_error_too(self):
+        assert issubclass(HighFeedAmbiguousIndexError, HighFeedKeyError)
+
+    def test_every_ambiguous_key_raises_the_same_way(self):
+        for scrip_key in ["NSE@26002", "NSE@26020", "NSE@26034", "NSE@26040", "NSE@26044", "NSE@26046"]:
+            with pytest.raises(HighFeedAmbiguousIndexError, match=scrip_key):
+                translate_index(scrip_key)
+
+    def test_an_ambiguous_key_is_also_rejected_by_translate_instrument(self):
+        # Not just "not found" (which would fall through to the prefix rule
+        # and silently produce nse_cm|26002, a token the feed does not
+        # know) — rejected specifically as an index key.
+        with pytest.raises(HighFeedKeyError) as exc_info:
+            translate_instrument("NSE@26002")
+        assert "index" in str(exc_info.value).lower()
+        assert "subscribe_indices" in str(exc_info.value)
+        # And NOT raised as the ambiguous-specific subtype here — from the
+        # quote/depth side, it is simply "use the index methods instead";
+        # the ambiguity itself is only relevant once you do.
+        assert not isinstance(exc_info.value, HighFeedAmbiguousIndexError)
 
 
 class TestTwoWayRejectionBetweenInstrumentAndIndexMethods:

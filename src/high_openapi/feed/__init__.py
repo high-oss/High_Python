@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from .client import AsyncHighFeed, HighFeed
 from .errors import (
+    HighFeedAmbiguousIndexError,
     HighFeedAuthError,
     HighFeedError,
     HighFeedInvalidTokenError,
@@ -28,6 +29,7 @@ __all__ = [
     "HighFeedNoDataPlanError",
     "HighFeedInvalidTokenError",
     "HighFeedKeyError",
+    "HighFeedAmbiguousIndexError",
     "HighFeedLimitError",
     "Quote",
     "Depth",

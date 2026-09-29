@@ -22,6 +22,7 @@ def test_exports_the_datafeed_clients_and_their_typed_models():
     assert issubclass(sdk.HighFeedNoDataPlanError, sdk.HighFeedAuthError)
     assert issubclass(sdk.HighFeedInvalidTokenError, sdk.HighFeedAuthError)
     assert issubclass(sdk.HighFeedKeyError, sdk.HighFeedError)
+    assert issubclass(sdk.HighFeedAmbiguousIndexError, sdk.HighFeedKeyError)
     assert issubclass(sdk.HighFeedLimitError, sdk.HighFeedError)
     for name in ["Quote", "Depth", "DepthLevel", "IndexTick"]:
         assert hasattr(sdk, name), f"sdk.{name} is missing"
