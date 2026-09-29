@@ -32,6 +32,17 @@ def test_exposes_all_five_resources_on_the_async_client_too():
         assert getattr(client, name, None) is not None, f"client.{name} is missing"
 
 
+# The instrument list is a sixth resource, added alongside the original five.
+# It is deliberately not part of EXPECTED_METHODS / the "24 operations" count
+# below: it is not one of the wrapped request/response operations from the
+# contract's table, it is a facade over an internal manifest lookup — see
+# resources/instruments.py's module docstring.
+def test_exposes_the_instruments_resource_with_exactly_a_streaming_and_an_eager_form():
+    for client in (sdk.HighClient(access_token="tok"), sdk.AsyncHighClient(access_token="tok")):
+        assert callable(client.instruments.stream)
+        assert callable(client.instruments.list)
+
+
 EXPECTED_METHODS = {
     "auth": ["generate_access_token"],
     "orders": ["place", "modify", "get", "cancel", "list", "trades", "trades_for", "charges", "margin"],

@@ -38,6 +38,14 @@ First release. Pre-1.0: the surface may still change.
   resolved config's own `__dict__`, so they never appear in `repr()`,
   `str()` or `vars()` of the client, its config, or its resources.
 - Only two runtime dependencies: `httpx` and `pydantic` (v2).
+- `high.instruments`: the scrip master as five categories (`all`, `equity`,
+  `derivatives`, `commodity`, `etfs`), each downloadable as a typed,
+  17-column row model. `stream()` (sync generator / async generator) is the
+  primary form; `list()` materialises the same rows eagerly. Needs no
+  credentials. Blank CSV fields become `None`; `price_tick` is left exactly
+  as reported, never rescaled. Takes an optional per-call `timeout_ms` for
+  the larger categories. A new `instrument_allowed_hosts` client option
+  restricts which hosts the CSV may be downloaded from.
 
 ### Notes
 

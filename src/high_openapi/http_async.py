@@ -37,20 +37,31 @@ def new_client(config: ResolvedConfig) -> httpx.AsyncClient:
     return httpx.AsyncClient(timeout=httpx.Timeout(config.timeout_ms / 1000))
 
 
-async def _attempt(client: httpx.AsyncClient, config: ResolvedConfig, method: str, url: str, headers: dict, content: Optional[bytes]):
+async def _attempt(
+    client: httpx.AsyncClient,
+    config: ResolvedConfig,
+    method: str,
+    url: str,
+    headers: dict,
+    content: Optional[bytes],
+    timeout_ms: Optional[float] = None,
+):
     config.logger.debug(
         f"HIGH -> {method.upper()} {redact_url(url)}",
         None if content is None else {"body": redact_body(json.loads(content))},
     )
     config.logger.info(f"HIGH {method.upper()} {redact_url(url)}")
 
+    effective_timeout_ms = timeout_ms if timeout_ms is not None else config.timeout_ms
     started = time.monotonic()
     try:
-        request_obj = client.build_request(method, url, headers=headers, content=content)
+        request_obj = client.build_request(
+            method, url, headers=headers, content=content, timeout=httpx.Timeout(effective_timeout_ms / 1000),
+        )
         response = await client.send(request_obj)
     except httpx.TimeoutException as exc:
-        config.logger.error(f"HIGH <- timeout after {config.timeout_ms}ms {redact_url(url)}")
-        raise HighApiError(f"Request timed out after {config.timeout_ms}ms", status=0, body=exc) from exc
+        config.logger.error(f"HIGH <- timeout after {effective_timeout_ms}ms {redact_url(url)}")
+        raise HighApiError(f"Request timed out after {effective_timeout_ms}ms", status=0, body=exc) from exc
     except httpx.HTTPError as exc:
         config.logger.error(f"HIGH <- transport failure {redact_url(url)}", str(exc))
         raise HighApiError(f"Request failed: {exc}", status=0, body=exc) from exc
@@ -99,6 +110,7 @@ async def send_request(
     auth: str,
     query: Optional[Mapping[str, Any]] = None,
     body: Any = None,
+    timeout_ms: Optional[float] = None,
 ) -> Any:
     headers = headers_for(config, auth, body is not None)
     url = url_for(config, path, query)
@@ -109,7 +121,7 @@ async def send_request(
 
     last_error: Optional[HighApiError] = None
     for index in range(max_attempts):
-        status, data, error, retry_after = await _attempt(client, config, method, url, headers, content)
+        status, data, error, retry_after = await _attempt(client, config, method, url, headers, content, timeout_ms)
         if error is None:
             return data
         last_error = error

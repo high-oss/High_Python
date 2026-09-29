@@ -15,6 +15,8 @@ import pytest
 from high_openapi.client import AsyncHighClient, HighClient
 from high_openapi.config import ENVIRONMENTS
 from high_openapi.errors import ERROR_CODES
+from high_openapi.generated.models import Instrument
+from high_openapi.resources.instruments import InstrumentCategory
 from high_openapi.resources.scrips import ExpiryType
 
 SPEC_PATH = Path(__file__).resolve().parent.parent / "src" / "high_openapi" / "generated" / "openapi.json"
@@ -59,6 +61,18 @@ class TestExpiryTypeMatchesTheSpec:
         assert ExpiryType.__args__ == ("futures", "options")
 
 
+# InstrumentCategory (resources/instruments.py) is likewise hand-written —
+# derived from the generated Instrument enum rather than widened to str.
+class TestInstrumentCategoryMatchesTheGeneratedEnum:
+    def test_matches_the_generated_instrument_enum_values(self):
+        assert set(InstrumentCategory.__args__) == {member.value for member in Instrument}
+
+    def test_matches_the_enum_the_pinned_spec_declares(self):
+        spec = _spec()
+        schema = spec["components"]["schemas"]["InstrumentFile"]["properties"]["instrument"]
+        assert set(schema["enum"]) == set(InstrumentCategory.__args__)
+
+
 # Point 12: credentials absent from a serialised client, at the HighClient
 # level (config.py's own containment is covered by test_config.py).
 class TestCredentialContainmentOnTheClient:
@@ -80,7 +94,9 @@ class TestCredentialContainmentOnTheClient:
     def test_resources_never_show_credentials_either(self):
         client = HighClient(access_token="SECRET-TOKEN", api_key="SECRET-KEY")
         try:
-            for resource in (client.auth, client.orders, client.portfolio, client.scrips, client.market):
+            for resource in (
+                client.auth, client.orders, client.portfolio, client.scrips, client.market, client.instruments,
+            ):
                 dump = repr(vars(resource))
                 assert "SECRET-TOKEN" not in dump
                 assert "SECRET-KEY" not in dump

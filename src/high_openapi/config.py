@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
-from typing import Any, Literal, Mapping, Optional, TypedDict
+from typing import Any, List, Literal, Mapping, Optional, Tuple, TypedDict
 from weakref import WeakKeyDictionary
 
 from .logger import LOG_LEVELS, Logger, LogSink, create_logger
@@ -30,6 +30,13 @@ ENVIRONMENTS = {
 Environment = Literal["production", "sandbox"]
 
 _DEFAULT_USER_AGENT = "high-sdk-python/0.0.1"
+
+# The CDN host the instrument list manifest normally points at. Overridable
+# via instrument_allowed_hosts, e.g. to point a sandbox client at a fixture
+# host in tests — but the default is what protects a caller who never
+# thinks about it from a manifest response redirecting the download
+# somewhere unexpected.
+_DEFAULT_INSTRUMENT_HOSTS: Tuple[str, ...] = ("high-space.blr1.cdn.digitaloceanspaces.com",)
 
 # Credentials never live in a ResolvedConfig instance's own __dict__ — they
 # live here, keyed by object identity, so repr(), str(), vars() and anything
@@ -57,6 +64,7 @@ class HighClientOptions(TypedDict, total=False):
     log_level: str
     log_sink: LogSink
     http_client: Any
+    instrument_allowed_hosts: List[str]
 
 
 @dataclass(frozen=True)
@@ -77,6 +85,10 @@ class ResolvedConfig:
     logger: Logger
     # Transport override, for tests or a proxy-aware client.
     http_client: Optional[Any] = field(default=None)
+    # Hosts the instrument-list CSV download may come from. Checked against
+    # the manifest's per-category url before any download request is made —
+    # see resources/instruments.py.
+    instrument_allowed_hosts: Tuple[str, ...] = field(default=_DEFAULT_INSTRUMENT_HOSTS)
 
     @property
     def api_key(self) -> Optional[str]:
@@ -171,6 +183,7 @@ def resolve_config(
         log_level=log_level,
         logger=create_logger(log_level, options.get("log_sink")),
         http_client=options.get("http_client"),
+        instrument_allowed_hosts=tuple(options.get("instrument_allowed_hosts") or _DEFAULT_INSTRUMENT_HOSTS),
     )
 
     api_key = options.get("api_key") or env.get("HIGH_API_KEY")

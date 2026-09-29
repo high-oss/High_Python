@@ -17,7 +17,9 @@ def test_covers_every_operation_in_the_pinned_spec():
         for method in item
         if method in ("get", "post", "put", "delete", "patch")
     ]
-    assert len(operations) == 27
+    # 27 wrapped-or-excluded operations from the original contract, plus the
+    # instrument list manifest (GET /instruments) added alongside it.
+    assert len(operations) == 28
 
 
 def test_exposes_the_shared_component_schemas_the_facades_return():
@@ -26,6 +28,18 @@ def test_exposes_the_shared_component_schemas_the_facades_return():
     # suite's compile-time `Pick<Order, 'orderId'>` assertion.
     assert "orderId" in models.Order.model_fields
     assert "availableBalance" in models.Funds.model_fields
+
+
+def test_exposes_the_instruments_manifest_and_file_models():
+    # Generated, not hand-written — the SDK's instruments resource parses
+    # into these directly rather than re-declaring the manifest shape.
+    assert "columns" in models.InstrumentsManifest.model_fields
+    assert "files" in models.InstrumentsManifest.model_fields
+    assert "url" in models.InstrumentFile.model_fields
+    assert set(models.Instrument) == {
+        models.Instrument.all, models.Instrument.equity, models.Instrument.derivatives,
+        models.Instrument.commodity, models.Instrument.etfs,
+    }
 
 
 def test_exposes_the_request_models_the_facades_wrap():

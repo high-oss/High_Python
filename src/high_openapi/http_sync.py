@@ -47,6 +47,12 @@ def headers_for(config: ResolvedConfig, auth: str, has_body: bool) -> dict:
                 status=0,
             )
         headers["authorization"] = f"Bearer {config.access_token}"
+    elif auth == "none":
+        # The instrument list manifest and its CSV downloads: no credential
+        # of any kind, even when the client was constructed with one — the
+        # CSV host is a third-party CDN and a bearer token sent to it would
+        # leak it.
+        pass
     else:
         if not config.api_key:
             raise HighApiError(
@@ -77,7 +83,15 @@ def _sleep(seconds: float, cancel_event) -> None:
         raise OperationCancelled("Operation cancelled during a retry delay.")
 
 
-def _attempt(client: httpx.Client, config: ResolvedConfig, method: str, url: str, headers: dict, content: Optional[bytes]):
+def _attempt(
+    client: httpx.Client,
+    config: ResolvedConfig,
+    method: str,
+    url: str,
+    headers: dict,
+    content: Optional[bytes],
+    timeout_ms: Optional[float] = None,
+):
     # Headers are never logged — they carry the bearer token and the api key.
     config.logger.debug(
         f"HIGH -> {method.upper()} {redact_url(url)}",
@@ -85,13 +99,19 @@ def _attempt(client: httpx.Client, config: ResolvedConfig, method: str, url: str
     )
     config.logger.info(f"HIGH {method.upper()} {redact_url(url)}")
 
+    effective_timeout_ms = timeout_ms if timeout_ms is not None else config.timeout_ms
     started = time.monotonic()
     try:
-        request_obj = client.build_request(method, url, headers=headers, content=content)
+        # The per-request timeout goes on build_request (it lands in the
+        # Request's own extensions), not on send() — httpx.Client.send()
+        # takes no timeout keyword of its own.
+        request_obj = client.build_request(
+            method, url, headers=headers, content=content, timeout=httpx.Timeout(effective_timeout_ms / 1000),
+        )
         response = client.send(request_obj)
     except httpx.TimeoutException as exc:
-        config.logger.error(f"HIGH <- timeout after {config.timeout_ms}ms {redact_url(url)}")
-        raise HighApiError(f"Request timed out after {config.timeout_ms}ms", status=0, body=exc) from exc
+        config.logger.error(f"HIGH <- timeout after {effective_timeout_ms}ms {redact_url(url)}")
+        raise HighApiError(f"Request timed out after {effective_timeout_ms}ms", status=0, body=exc) from exc
     except httpx.HTTPError as exc:
         config.logger.error(f"HIGH <- transport failure {redact_url(url)}", str(exc))
         raise HighApiError(f"Request failed: {exc}", status=0, body=exc) from exc
@@ -141,7 +161,12 @@ def send_request(
     query: Optional[Mapping[str, Any]] = None,
     body: Any = None,
     cancel_event=None,
+    timeout_ms: Optional[float] = None,
 ) -> Any:
+    """``timeout_ms`` overrides ``config.timeout_ms`` for this call only — the
+    instrument list manifest is a small JSON response, but its caller may
+    already be working under a raised per-call ceiling for the CSV download
+    that follows it (see resources/instruments.py), and the two should agree."""
     headers = headers_for(config, auth, body is not None)
     url = url_for(config, path, query)
     content = json.dumps(body, separators=(",", ":")).encode("utf-8") if body is not None else None
@@ -154,7 +179,7 @@ def send_request(
         if cancel_event is not None and cancel_event.is_set():
             raise OperationCancelled("Operation cancelled before the request was sent.")
 
-        status, data, error, retry_after = _attempt(client, config, method, url, headers, content)
+        status, data, error, retry_after = _attempt(client, config, method, url, headers, content, timeout_ms)
         if error is None:
             return data
         last_error = error

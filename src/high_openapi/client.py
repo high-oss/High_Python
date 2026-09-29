@@ -35,6 +35,7 @@ import httpx
 from . import http_async, http_sync
 from .config import ResolvedConfig, resolve_config
 from .resources.auth import AsyncAuthResource, AuthResource
+from .resources.instruments import AsyncInstrumentsResource, InstrumentsResource
 from .resources.market import AsyncMarketResource, MarketResource
 from .resources.orders import AsyncOrdersResource, OrdersResource
 from .resources.portfolio import AsyncPortfolioResource, PortfolioResource
@@ -58,6 +59,7 @@ class HighClient:
         self._client: httpx.Client = self.config.http_client or http_sync.new_client(self.config)
 
         self.auth = AuthResource(self._client, self.config)
+        self.instruments = InstrumentsResource(self._client, self.config)
         self.market = MarketResource(self._client, self.config)
         self.orders = OrdersResource(self._client, self.config)
         self.portfolio = PortfolioResource(self._client, self.config)
@@ -97,6 +99,7 @@ class AsyncHighClient:
         self._client: httpx.AsyncClient = self.config.http_client or http_async.new_client(self.config)
 
         self.auth = AsyncAuthResource(self._client, self.config)
+        self.instruments = AsyncInstrumentsResource(self._client, self.config)
         self.market = AsyncMarketResource(self._client, self.config)
         self.orders = AsyncOrdersResource(self._client, self.config)
         self.portfolio = AsyncPortfolioResource(self._client, self.config)

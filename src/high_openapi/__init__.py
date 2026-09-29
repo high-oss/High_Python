@@ -8,6 +8,7 @@ from .config import ENVIRONMENTS, Environment, HighClientOptions, ResolvedConfig
 from .errors import ERROR_CODES, HighApiError, OperationCancelled
 from .logger import LOG_LEVELS, Logger, LogSink, create_logger, redact_body, redact_url
 from .resources.auth import AsyncAuthResource, AuthResource
+from .resources.instruments import AsyncInstrumentsResource, InstrumentCategory, InstrumentRow, InstrumentsResource
 from .resources.market import AsyncMarketResource, MarketResource
 from .resources.orders import AsyncOrdersResource, OrdersResource
 from .resources.portfolio import AsyncPortfolioResource, PortfolioResource
@@ -35,6 +36,10 @@ __all__ = [
     "redact_url",
     "AuthResource",
     "AsyncAuthResource",
+    "InstrumentsResource",
+    "AsyncInstrumentsResource",
+    "InstrumentCategory",
+    "InstrumentRow",
     "MarketResource",
     "AsyncMarketResource",
     "OrdersResource",

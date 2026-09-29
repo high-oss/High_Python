@@ -65,6 +65,7 @@ owns one pooled `httpx.AsyncClient`. Use them as context managers (`with` /
 | `log_sink` | stderr/stdout | Where log lines go |
 | `user_agent` | — | Appended to the SDK's own |
 | `http_client` | a new `httpx.Client`/`httpx.AsyncClient` | Transport override, for tests or a proxy-aware client |
+| `instrument_allowed_hosts` | the instrument list's usual CDN host | Hosts `high.instruments` may download the CSV files from |
 
 Options can be passed as a mapping (`HighClient({"api_key": ...})`) or as
 keyword arguments (`HighClient(api_key=...)`) — both are equivalent.
@@ -243,6 +244,76 @@ c.close[0]                   # not c[0].close
 # positions and holdings both have `snapshot`, with different shapes
 high.portfolio.positions().snapshot.totalPL
 high.portfolio.holdings().snapshot.investment
+```
+
+### Instrument list
+
+`high.instruments` fetches the scrip master — every instrument HIGH knows —
+as one of five categories:
+
+| Category | Contents |
+|---|---|
+| `all` | Every scrip, all exchanges |
+| `equity` | NSE/BSE cash equity |
+| `derivatives` | NSE/BSE futures and options |
+| `commodity` | MCX futures, options and spot |
+| `etfs` | NSE/BSE exchange-traded funds |
+
+It needs **no credentials** — neither `api_key` nor `access_token` is sent
+for this call, so it works even on a client constructed with neither. The
+streaming form is the primary API; `all` and `derivatives` run to 14 MB and
+11 MB, so avoid `list()` for those unless you actually need every row in
+memory at once.
+
+```python
+# Streaming (primary) — never buffers the whole file in memory.
+for row in high.instruments.stream("equity"):
+    print(row.high_trading_symbol, row.symbol, row.lot_size)
+
+# Eager — materialises the whole category into a list.
+equities = high.instruments.list("equity")
+```
+
+Async:
+
+```python
+async for row in high.instruments.stream("equity"):
+    print(row.high_trading_symbol)
+
+equities = await high.instruments.list("equity")
+```
+
+Every row has these 17 columns. A blank CSV field comes back as `None`, not
+an empty string:
+
+| Column | Type | Notes |
+|---|---|---|
+| `exchange` | `str` | |
+| `segment` | `str` | |
+| `instrument` | `str \| None` | |
+| `high_trading_symbol` | `str` | |
+| `scrip_key` | `str` | |
+| `isin` | `str \| None` | |
+| `scrip_code` | `int` | |
+| `symbol` | `str` | |
+| `name` | `str` | |
+| `group_series` | `str \| None` | |
+| `has_fno` | `int` | |
+| `underlying_symbol` | `str \| None` | Derivatives only |
+| `expiry` | `date \| None` | Derivatives only |
+| `option_type` | `str \| None` | Options only |
+| `strike_price` | `float \| None` | Options only |
+| `price_tick` | `int` | **Not normalised** — its scale varies by segment; do not rescale it yourself without checking which segment a row belongs to |
+| `lot_size` | `int` | |
+
+The files are rebuilt once each trading morning and do not change
+intraday — download once a day and cache the result rather than fetching it
+on every call. `stream()` / `list()` both take an optional `timeout_ms` to
+raise the ceiling for a single call, without changing the client's global
+`timeout_ms`:
+
+```python
+equities = high.instruments.list("equity", timeout_ms=60_000)
 ```
 
 ## Live datafeed
