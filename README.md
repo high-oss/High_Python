@@ -255,6 +255,34 @@ high.portfolio.positions().snapshot.totalPL
 high.portfolio.holdings().snapshot.investment
 ```
 
+Intraday candles are the same columnar shape, for the most recent trading
+session. Name the instrument either way:
+
+```python
+today = high.scrips.intraday({"tradingSymbol": "RELIANCE-EQ", "interval": "5m"})
+today = high.scrips.intraday({"exchangeSegment": "NSE", "scripCode": "2885", "interval": "1h"})
+today.close[-1]              # last candle's close
+```
+
+Stop-loss and target exits on an open position. Both are PATCH requests:
+they place a new exit order, or amend the existing one, and return a
+`PositionRiskOrderResult`. Both need a static IP registered with HIGH, and
+neither is ever retried, so check the order book before resending after a
+transport failure.
+
+```python
+position = {"tradingSymbol": "RELIANCE-EQ", "flavor": "REGULAR", "productType": "INTRADAY"}
+
+stoploss = high.portfolio.set_stoploss({**position, "triggerPrice": 2400})
+print(stoploss.action.value, stoploss.orderId, stoploss.limitPrice)   # PLACED or MODIFIED
+
+target = high.portfolio.set_target({**position, "targetPrice": 2600})
+print(target.action.value, target.orderId, target.price)
+```
+
+Runnable versions live in [`examples/`](./examples): `intraday_candles.py`,
+`position_stoploss_target.py`, and their `_async` counterparts.
+
 ### Instrument list
 
 `high.instruments` fetches the scrip master — every instrument HIGH knows —
