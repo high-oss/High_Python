@@ -35,7 +35,7 @@ ENVIRONMENTS = {
 
 Environment = Literal["production", "sandbox"]
 
-_DEFAULT_USER_AGENT = "high-sdk-python/0.0.1"
+_DEFAULT_USER_AGENT = "high-sdk-python/0.1.0"
 
 # The CDN host the instrument list manifest normally points at. Overridable
 # via instrument_allowed_hosts, e.g. to point a sandbox client at a fixture

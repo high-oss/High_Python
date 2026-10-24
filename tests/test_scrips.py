@@ -1,7 +1,13 @@
 # Copyright (c) 2026 Truestock
 # SPDX-License-Identifier: MIT
 
-from high_openapi.client import HighClient
+import json
+
+import pytest
+from pydantic import ValidationError
+
+from high_openapi.client import AsyncHighClient, HighClient
+from high_openapi.errors import HighApiError
 
 from .server import send_json, start_server
 
@@ -119,5 +125,131 @@ class TestScripsResource:
                 except Exception:
                     pass
             assert len(s.requests) == 1
+        finally:
+            s.close()
+
+
+CANDLES = {
+    "tradingSymbol": "NSE@2885", "interval": "5m",
+    "timestamp": [1789929000, 1789929300], "open": [1398.5, 1402], "high": [1406.2, 1409.8],
+    "low": [1394.1, 1399.3], "close": [1401.7, 1407.4], "volume": [7215430, 6532180],
+}
+
+
+class TestHistoricalInstrumentForms:
+    def test_historical_accepts_exchange_segment_and_scrip_code_without_a_symbol(self):
+        s = start_server(lambda h, i: send_json(h, 200, ok(CANDLES)))
+        try:
+            with sync_client(s) as high:
+                candles = high.scrips.historical({
+                    "exchangeSegment": "NSE", "scripCode": "2885", "interval": "5m",
+                    "fromTime": 1789929000, "toTime": 1789930000,
+                })
+            assert len(candles.close) == 2
+            body = json.loads(s.requests[0].body)
+            assert body["exchangeSegment"] == "NSE" and body["scripCode"] == "2885"
+            assert "tradingSymbol" not in body
+        finally:
+            s.close()
+
+    def test_historical_rejects_a_body_naming_no_instrument_before_sending(self):
+        s = start_server(lambda h, i: send_json(h, 200, ok(CANDLES)))
+        try:
+            with sync_client(s) as high:
+                with pytest.raises(ValidationError):
+                    high.scrips.historical({"exchangeSegment": "NSE", "interval": "1D",
+                                            "fromTime": 1, "toTime": 2})
+                with pytest.raises(ValidationError):
+                    high.scrips.historical({"scripCode": "2885", "interval": "1D",
+                                            "fromTime": 1, "toTime": 2})
+            assert s.requests == []
+        finally:
+            s.close()
+
+
+class TestIntradayScrips:
+    def test_intraday_posts_to_the_intraday_path_and_returns_columnar_candles(self):
+        s = start_server(lambda h, i: send_json(h, 200, ok(CANDLES)))
+        try:
+            with sync_client(s) as high:
+                candles = high.scrips.intraday({"tradingSymbol": "RELIANCE-EQ", "interval": "5m"})
+            assert s.requests[0].method == "POST"
+            assert s.requests[0].url == "/v1/scrips/intraday"
+            assert candles.timestamp == [1789929000, 1789929300]
+            assert len(candles.open) == len(candles.timestamp)
+        finally:
+            s.close()
+
+    def test_intraday_accepts_exchange_segment_and_scrip_code(self):
+        s = start_server(lambda h, i: send_json(h, 200, ok(CANDLES)))
+        try:
+            with sync_client(s) as high:
+                high.scrips.intraday({"exchangeSegment": "NSE", "scripCode": "2885", "interval": "1h"})
+            body = json.loads(s.requests[0].body)
+            assert body == {"exchangeSegment": "NSE", "scripCode": "2885", "interval": "1h"}
+        finally:
+            s.close()
+
+    def test_intraday_rejects_an_interval_the_spec_does_not_list(self):
+        s = start_server(lambda h, i: send_json(h, 200, ok(CANDLES)))
+        try:
+            with sync_client(s) as high:
+                with pytest.raises(ValidationError):
+                    high.scrips.intraday({"tradingSymbol": "RELIANCE-EQ", "interval": "1D"})
+            assert s.requests == []
+        finally:
+            s.close()
+
+    def test_intraday_rejects_a_body_naming_no_instrument_before_sending(self):
+        s = start_server(lambda h, i: send_json(h, 200, ok(CANDLES)))
+        try:
+            with sync_client(s) as high:
+                with pytest.raises(ValidationError):
+                    high.scrips.intraday({"interval": "5m"})
+            assert s.requests == []
+        finally:
+            s.close()
+
+    def test_intraday_is_a_post_so_it_is_never_retried(self):
+        s = start_server(lambda h, i: send_json(h, 503, {"code": "SERVICE_UNAVAILABLE"}))
+        try:
+            with sync_client(s) as high:
+                with pytest.raises(HighApiError):
+                    high.scrips.intraday({"tradingSymbol": "RELIANCE-EQ", "interval": "5m"})
+            assert len(s.requests) == 1
+        finally:
+            s.close()
+
+
+class TestAsyncScrips:
+    async def test_async_intraday_posts_and_returns_columnar_candles(self):
+        s = start_server(lambda h, i: send_json(h, 200, ok(CANDLES)))
+        try:
+            async with AsyncHighClient(base_url=s.base_url, access_token="tok") as high:
+                candles = await high.scrips.intraday({"tradingSymbol": "RELIANCE-EQ", "interval": "5m"})
+            assert s.requests[0].url == "/v1/scrips/intraday"
+            assert len(candles.close) == 2
+        finally:
+            s.close()
+
+    async def test_async_historical_accepts_exchange_segment_and_scrip_code(self):
+        s = start_server(lambda h, i: send_json(h, 200, ok(CANDLES)))
+        try:
+            async with AsyncHighClient(base_url=s.base_url, access_token="tok") as high:
+                await high.scrips.historical({
+                    "exchangeSegment": "NSE", "scripCode": "2885", "interval": "5m",
+                    "fromTime": 1789929000, "toTime": 1789930000,
+                })
+            assert json.loads(s.requests[0].body)["scripCode"] == "2885"
+        finally:
+            s.close()
+
+    async def test_async_intraday_rejects_a_body_naming_no_instrument_before_sending(self):
+        s = start_server(lambda h, i: send_json(h, 200, ok(CANDLES)))
+        try:
+            async with AsyncHighClient(base_url=s.base_url, access_token="tok") as high:
+                with pytest.raises(ValidationError):
+                    await high.scrips.intraday({"interval": "5m"})
+            assert s.requests == []
         finally:
             s.close()

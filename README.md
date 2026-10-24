@@ -212,15 +212,21 @@ the two clients use the idiomatic mechanism for each:
 
 ## Resources
 
-24 operations across five namespaces, methods named per PEP 8:
+27 operations across five namespaces, methods named per PEP 8:
 
 | Namespace | Methods |
 |---|---|
 | `auth` | `generate_access_token` |
 | `orders` | `place` · `modify` · `get` · `cancel` · `list` · `trades` · `trades_for` · `charges` · `margin` |
-| `portfolio` | `positions` · `holdings` · `funds` · `convert_position` · `exit_all_positions` · `exit_position` |
-| `scrips` | `quotes` · `ohlc` · `depth` · `expiries` · `future_data` · `historical` · `option_chain` |
+| `portfolio` | `positions` · `holdings` · `funds` · `convert_position` · `set_stoploss` · `set_target` · `exit_all_positions` · `exit_position` |
+| `scrips` | `quotes` · `ohlc` · `depth` · `expiries` · `future_data` · `historical` · `intraday` · `option_chain` |
 | `market` | `status` |
+
+`historical`, `intraday`, `set_stoploss` and `set_target` name the instrument
+either by `tradingSymbol` or by `exchangeSegment` + `scripCode`; a body with
+neither raises `ValidationError` before anything is sent. `set_stoploss`,
+`set_target`, `convert_position` and both exit operations require a static IP
+registered with HIGH, and none of the writes is ever retried.
 
 Each method returns a parsed pydantic model — the `{requestId, data}`
 envelope is unwrapped for you, and `request_id` reaches you on the error. A

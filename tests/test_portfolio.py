@@ -3,7 +3,10 @@
 
 import json
 
-from high_openapi.client import HighClient
+import pytest
+from pydantic import ValidationError
+
+from high_openapi.client import AsyncHighClient, HighClient
 from high_openapi.errors import HighApiError
 
 from .server import send_json, start_server
@@ -141,6 +144,137 @@ class TestPortfolioResource:
                     raise AssertionError("expected a validation error")
                 except Exception as exc:
                     assert exc.__class__.__name__ == "ValidationError"
+            assert s.requests == []
+        finally:
+            s.close()
+
+
+RISK_ORDER = {
+    "tradingSymbol": "RELIANCE-EQ", "exchangeSegment": "NSE", "scripCode": "2885",
+    "leg": "STOPLOSS", "action": "PLACED", "flavor": "REGULAR", "orderId": "250512000012345",
+    "quantity": 50, "price": 2400, "limitPrice": 2399.95, "isSubmitted": True,
+}
+
+STOPLOSS_BODY = {
+    "tradingSymbol": "RELIANCE-EQ", "flavor": "REGULAR", "productType": "INTRADAY", "triggerPrice": 2400,
+}
+
+TARGET_BODY = {
+    "exchangeSegment": "NSE", "scripCode": "2885", "flavor": "GTT", "productType": "DELIVERY",
+    "targetPrice": 2600,
+}
+
+
+class TestPositionRiskOrders:
+    def test_set_stoploss_patches_the_stoploss_endpoint_and_returns_the_exit_order(self):
+        s = start_server(lambda h, i: send_json(h, 200, ok(RISK_ORDER)))
+        try:
+            with sync_client(s) as high:
+                result = high.portfolio.set_stoploss(STOPLOSS_BODY)
+            assert s.requests[0].method == "PATCH"
+            assert s.requests[0].url == "/v1/portfolio/positions/stoploss"
+            assert result.leg.value == "STOPLOSS"
+            assert result.action.value == "PLACED"
+            assert result.limitPrice == 2399.95
+            assert json.loads(s.requests[0].body) == STOPLOSS_BODY
+        finally:
+            s.close()
+
+    def test_set_target_patches_the_target_endpoint_and_sends_target_price(self):
+        s = start_server(lambda h, i: send_json(h, 200, ok(dict(RISK_ORDER, leg="TARGET", action="MODIFIED"))))
+        try:
+            with sync_client(s) as high:
+                result = high.portfolio.set_target(TARGET_BODY)
+            assert s.requests[0].method == "PATCH"
+            assert s.requests[0].url == "/v1/portfolio/positions/target"
+            assert result.leg.value == "TARGET"
+            assert result.action.value == "MODIFIED"
+            assert json.loads(s.requests[0].body)["targetPrice"] == 2600
+        finally:
+            s.close()
+
+    def test_set_stoploss_accepts_exchange_segment_and_scrip_code_without_a_symbol(self):
+        s = start_server(lambda h, i: send_json(h, 200, ok(RISK_ORDER)))
+        try:
+            with sync_client(s) as high:
+                high.portfolio.set_stoploss(dict(STOPLOSS_BODY, tradingSymbol=None,
+                                                 exchangeSegment="NSE", scripCode="2885"))
+            body = json.loads(s.requests[0].body)
+            assert "tradingSymbol" not in body
+            assert body["scripCode"] == "2885"
+        finally:
+            s.close()
+
+    def test_set_target_rejects_a_body_naming_no_instrument_before_sending(self):
+        s = start_server(lambda h, i: send_json(h, 200, ok(RISK_ORDER)))
+        try:
+            with sync_client(s) as high:
+                with pytest.raises(ValidationError):
+                    high.portfolio.set_target({"flavor": "REGULAR", "productType": "INTRADAY", "targetPrice": 2600})
+            assert s.requests == []
+        finally:
+            s.close()
+
+    def test_set_stoploss_rejects_a_flavor_outside_the_spec_enum_before_sending(self):
+        s = start_server(lambda h, i: send_json(h, 200, ok(RISK_ORDER)))
+        try:
+            with sync_client(s) as high:
+                with pytest.raises(ValidationError):
+                    high.portfolio.set_stoploss(dict(STOPLOSS_BODY, flavor="NOT_A_FLAVOR"))
+            assert s.requests == []
+        finally:
+            s.close()
+
+    def test_set_stoploss_is_never_retried_even_on_503(self):
+        s = start_server(lambda h, i: send_json(h, 503, {"code": "SERVICE_UNAVAILABLE"}))
+        try:
+            with sync_client(s) as high:
+                with pytest.raises(HighApiError):
+                    high.portfolio.set_stoploss(STOPLOSS_BODY)
+            assert len(s.requests) == 1
+        finally:
+            s.close()
+
+    def test_set_target_is_never_retried_even_on_503(self):
+        s = start_server(lambda h, i: send_json(h, 503, {"code": "SERVICE_UNAVAILABLE"}))
+        try:
+            with sync_client(s) as high:
+                with pytest.raises(HighApiError):
+                    high.portfolio.set_target(TARGET_BODY)
+            assert len(s.requests) == 1
+        finally:
+            s.close()
+
+
+class TestAsyncPositionRiskOrders:
+    async def test_async_set_stoploss_patches_the_stoploss_endpoint(self):
+        s = start_server(lambda h, i: send_json(h, 200, ok(RISK_ORDER)))
+        try:
+            async with AsyncHighClient(base_url=s.base_url, access_token="tok") as high:
+                result = await high.portfolio.set_stoploss(STOPLOSS_BODY)
+            assert s.requests[0].method == "PATCH"
+            assert s.requests[0].url == "/v1/portfolio/positions/stoploss"
+            assert result.orderId == "250512000012345"
+        finally:
+            s.close()
+
+    async def test_async_set_target_patches_the_target_endpoint(self):
+        s = start_server(lambda h, i: send_json(h, 200, ok(dict(RISK_ORDER, leg="TARGET"))))
+        try:
+            async with AsyncHighClient(base_url=s.base_url, access_token="tok") as high:
+                result = await high.portfolio.set_target(TARGET_BODY)
+            assert s.requests[0].method == "PATCH"
+            assert s.requests[0].url == "/v1/portfolio/positions/target"
+            assert result.leg.value == "TARGET"
+        finally:
+            s.close()
+
+    async def test_async_set_target_rejects_a_body_naming_no_instrument_before_sending(self):
+        s = start_server(lambda h, i: send_json(h, 200, ok(RISK_ORDER)))
+        try:
+            async with AsyncHighClient(base_url=s.base_url, access_token="tok") as high:
+                with pytest.raises(ValidationError):
+                    await high.portfolio.set_target({"flavor": "REGULAR", "productType": "INTRADAY", "targetPrice": 1})
             assert s.requests == []
         finally:
             s.close()

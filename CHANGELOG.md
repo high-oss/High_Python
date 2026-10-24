@@ -4,6 +4,39 @@ All notable changes to this package are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0] — 2026-10-24
+
+Synced to the canonical spec at commit `c1f37de`. Pre-1.0: the surface may
+still change.
+
+### Added
+
+- `scrips.intraday` on both clients: candles of the most recent trading
+  session, by `tradingSymbol` or by `exchangeSegment` + `scripCode`, returned
+  in the same columnar shape as `historical`. Needs the data plan.
+- `high.portfolio.set_stoploss` and `high.portfolio.set_target` on both
+  clients: place a stop-loss or target exit for an open position, or amend
+  the existing one. Each returns the new `PositionRiskOrderResult`. Requires a
+  static IP. Never retried.
+- Request bodies that name an instrument (`historical`, `intraday`,
+  `set_stoploss`, `set_target`) accept either `tradingSymbol` or
+  `exchangeSegment` + `scripCode`. Neither is rejected with `ValidationError`
+  before anything is sent.
+
+### Changed
+
+- `scrips.historical` no longer requires `tradingSymbol`; it accepts
+  `exchangeSegment` + `scripCode` instead.
+- The pinned spec is now `c1f37de`, with 31 contract operations (27 wrapped
+  by the SDK, 3 deliberately excluded auth operations, and the instrument
+  list).
+
+### Removed
+
+- `ScripInfo.logo`. The contract no longer returns logos, so the field is
+  gone from the generated model. Code that read `logo` from
+  `future_data` results must stop doing so.
+
 ## [0.0.1] — 2026-09-28
 
 First release. Pre-1.0: the surface may still change.

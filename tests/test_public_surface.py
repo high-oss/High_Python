@@ -72,8 +72,11 @@ def test_exposes_the_instruments_resource_with_exactly_a_streaming_and_an_eager_
 EXPECTED_METHODS = {
     "auth": ["generate_access_token"],
     "orders": ["place", "modify", "get", "cancel", "list", "trades", "trades_for", "charges", "margin"],
-    "portfolio": ["positions", "holdings", "funds", "convert_position", "exit_all_positions", "exit_position"],
-    "scrips": ["quotes", "ohlc", "depth", "expiries", "future_data", "historical", "option_chain"],
+    "portfolio": [
+        "positions", "holdings", "funds", "convert_position", "set_stoploss", "set_target",
+        "exit_all_positions", "exit_position",
+    ],
+    "scrips": ["quotes", "ohlc", "depth", "expiries", "future_data", "historical", "intraday", "option_chain"],
     "market": ["status"],
 }
 
@@ -86,9 +89,10 @@ def test_exposes_every_operation_the_sdk_covers_as_a_method():
         for method in methods:
             assert callable(getattr(target, method, None)), f"{resource}.{method}"
             count += 1
-    # The spec has 27 operations; the SDK covers 24 — login, the two consent
-    # operations and token introspection are deliberately excluded.
-    assert count == 24
+    # The contract has 31 operations: 27 are wrapped here; the consent flow and
+    # token introspection are deliberately excluded, and the instrument list is
+    # a resource of its own (see above).
+    assert count == 27
 
 
 def test_exposes_every_operation_on_the_async_client_too():
@@ -99,7 +103,7 @@ def test_exposes_every_operation_on_the_async_client_too():
         for method in methods:
             assert callable(getattr(target, method, None)), f"{resource}.{method}"
             count += 1
-    assert count == 24
+    assert count == 27
 
 
 def test_ships_minimal_runtime_dependencies():

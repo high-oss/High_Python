@@ -24,6 +24,7 @@ from ..generated.models import (
     Expiry,
     HistoricalCandles,
     HistoricalRequest,
+    IntradayRequest,
     MarketDepth,
     OhlcRequest,
     OptionChain,
@@ -33,11 +34,11 @@ from ..generated.models import (
     Touchline,
 )
 from ..paths import path_of
-from ._shared import Body, dump_body, parse, parse_list, parse_map
+from ._shared import Body, dump_body, dump_instrument_body, parse, parse_list, parse_map
 
 __all__ = [
     "ScripsResource", "AsyncScripsResource", "ExpiryType",
-    "QuotesRequest", "OhlcRequest", "HistoricalRequest", "OptionChainRequest",
+    "QuotesRequest", "OhlcRequest", "HistoricalRequest", "IntradayRequest", "OptionChainRequest",
 ]
 
 ExpiryType = Literal["futures", "options"]
@@ -94,10 +95,22 @@ class ScripsResource:
 
     def historical(self, body: Body, *, cancel_event=None) -> HistoricalCandles:
         """Historical candles, returned columnar: every array has the same
-        length and index i across them describes one candle."""
-        payload = dump_body(HistoricalRequest, body)
+        length and index i across them describes one candle. The instrument
+        is named by tradingSymbol, or by exchangeSegment + scripCode."""
+        payload = dump_instrument_body(HistoricalRequest, body)
         data = http_sync.send_request(
             self._client, self._config, method="POST", path="/scrips/historical", auth="bearer",
+            body=payload, cancel_event=cancel_event,
+        )
+        return parse(HistoricalCandles, data)
+
+    def intraday(self, body: Body, *, cancel_event=None) -> HistoricalCandles:
+        """Candles of the most recent trading session, in the same columnar
+        shape as historical. The instrument is named by tradingSymbol, or by
+        exchangeSegment + scripCode."""
+        payload = dump_instrument_body(IntradayRequest, body)
+        data = http_sync.send_request(
+            self._client, self._config, method="POST", path="/scrips/intraday", auth="bearer",
             body=payload, cancel_event=cancel_event,
         )
         return parse(HistoricalCandles, data)
@@ -153,9 +166,16 @@ class AsyncScripsResource:
         return parse_list(ScripInfo, data)
 
     async def historical(self, body: Body) -> HistoricalCandles:
-        payload = dump_body(HistoricalRequest, body)
+        payload = dump_instrument_body(HistoricalRequest, body)
         data = await http_async.send_request(
             self._client, self._config, method="POST", path="/scrips/historical", auth="bearer", body=payload,
+        )
+        return parse(HistoricalCandles, data)
+
+    async def intraday(self, body: Body) -> HistoricalCandles:
+        payload = dump_instrument_body(IntradayRequest, body)
+        data = await http_async.send_request(
+            self._client, self._config, method="POST", path="/scrips/intraday", auth="bearer", body=payload,
         )
         return parse(HistoricalCandles, data)
 

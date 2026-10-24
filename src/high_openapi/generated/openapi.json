@@ -32,7 +32,7 @@
     },
     {
       "name": "portfolio",
-      "description": "Positions, holdings, funds; convert and exit positions.",
+      "description": "Positions, holdings, funds; convert and exit positions; set stop-loss and target.",
       "x-display-name": "Portfolio",
       "x-plan": "free"
     },
@@ -44,7 +44,7 @@
     },
     {
       "name": "scrips",
-      "description": "Quotes, OHLC, depth, historical candles, option chain and expiries.",
+      "description": "Quotes, OHLC, depth, historical and intraday candles, option chain and expiries.",
       "x-display-name": "Market data",
       "x-plan": "data"
     }
@@ -981,7 +981,6 @@
                         "exchange": "NSE",
                         "segment": "ES",
                         "scripKey": "NSE@2885",
-                        "logo": "https://high-space.blr1.cdn.digitaloceanspaces.com/logos/RELIANCE.png",
                         "symbol": "RELIANCE",
                         "scripName": "Reliance Industries Ltd",
                         "marketLot": 1,
@@ -1119,7 +1118,6 @@
                         "exchange": "NSE",
                         "segment": "ES",
                         "scripKey": "NSE@2885",
-                        "logo": "https://high-space.blr1.cdn.digitaloceanspaces.com/logos/RELIANCE.png",
                         "symbol": "RELIANCE",
                         "scripName": "Reliance Industries Ltd",
                         "marketLot": 1,
@@ -1135,7 +1133,6 @@
                         "exchange": "NSE",
                         "segment": "ES",
                         "scripKey": "NSE@11536",
-                        "logo": "https://high-space.blr1.cdn.digitaloceanspaces.com/logos/TCS.png",
                         "symbol": "TCS",
                         "scripName": "Tata Consultancy Services Ltd",
                         "marketLot": 1,
@@ -1249,7 +1246,6 @@
                         "exchange": "NSE",
                         "segment": "ES",
                         "scripKey": "NSE@2885",
-                        "logo": "https://high-space.blr1.cdn.digitaloceanspaces.com/logos/RELIANCE.png",
                         "symbol": "RELIANCE",
                         "scripName": "Reliance Industries Ltd",
                         "marketLot": 1,
@@ -1375,7 +1371,6 @@
                         "exchange": "NSE",
                         "segment": "ES",
                         "scripKey": "NSE@2885",
-                        "logo": "https://high-space.blr1.cdn.digitaloceanspaces.com/logos/RELIANCE.png",
                         "symbol": "RELIANCE",
                         "scripName": "Reliance Industries Ltd",
                         "marketLot": 1,
@@ -1815,7 +1810,6 @@
                         "exchange": "NSE",
                         "segment": "ES",
                         "scripKey": "NSE@2885",
-                        "logo": "https://high-space.blr1.cdn.digitaloceanspaces.com/logos/RELIANCE.png",
                         "symbol": "RELIANCE",
                         "scripName": "Reliance Industries Ltd",
                         "marketLot": 1,
@@ -1940,7 +1934,6 @@
                         "exchange": "NSE",
                         "segment": "ES",
                         "scripKey": "NSE@2885",
-                        "logo": "https://high-space.blr1.cdn.digitaloceanspaces.com/logos/RELIANCE.png",
                         "symbol": "RELIANCE",
                         "scripName": "Reliance Industries Ltd",
                         "marketLot": 1,
@@ -2213,6 +2206,305 @@
                     },
                     "data": {
                       "$ref": "#/components/schemas/PositionConvertResult"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/portfolio/positions/stoploss": {
+      "patch": {
+        "operationId": "set-position-stoploss",
+        "tags": [
+          "portfolio"
+        ],
+        "summary": "Set a position stop-loss",
+        "description": "Places a stop-loss exit order for an open position, or amends the existing one. Quantity is taken from the live position, never from the caller.",
+        "x-plan": "free",
+        "x-status": "live",
+        "x-rate-limit": {
+          "short": {
+            "limit": 50,
+            "per": "minute"
+          },
+          "long": {
+            "limit": 3000,
+            "per": "day"
+          }
+        },
+        "x-static-ip": true,
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "flavor",
+                  "productType",
+                  "triggerPrice"
+                ],
+                "properties": {
+                  "tradingSymbol": {
+                    "type": "string",
+                    "description": "Trading symbol from the instrument list. Required unless exchangeSegment + scripCode are sent.",
+                    "example": "RELIANCE-EQ"
+                  },
+                  "exchangeSegment": {
+                    "type": "string",
+                    "description": "Exchange segment. Required when tradingSymbol is not sent.",
+                    "enum": [
+                      "NSE",
+                      "BSE",
+                      "NSEFO",
+                      "BSEFO",
+                      "NSECDSFO",
+                      "BSECDSFO",
+                      "MCXFO"
+                    ],
+                    "example": "NSE"
+                  },
+                  "scripCode": {
+                    "type": "string",
+                    "description": "Broker scrip code (token). Required when tradingSymbol is not sent.",
+                    "example": "2885"
+                  },
+                  "flavor": {
+                    "type": "string",
+                    "enum": [
+                      "REGULAR",
+                      "BO",
+                      "CO",
+                      "GTT"
+                    ],
+                    "description": "Flavor the exit order is placed under. BO/CO amend the position's own broker-owned leg and must match the flavor GET /portfolio/positions reports. REGULAR places a DAY stop that dies at EOD; GTT places one that carries forward; a GTT exit is still placed against a REGULAR position.",
+                    "example": "REGULAR"
+                  },
+                  "productType": {
+                    "type": "string",
+                    "enum": [
+                      "INTRADAY",
+                      "DELIVERY"
+                    ],
+                    "description": "Product type of the open position.",
+                    "example": "INTRADAY"
+                  },
+                  "orderId": {
+                    "type": "string",
+                    "description": "Existing exit order to modify. Only needed to disambiguate when more than one live exit order matches the position.",
+                    "example": "250512000012345"
+                  },
+                  "triggerPrice": {
+                    "type": "number",
+                    "description": "Stop-loss trigger price. Must be below LTP for a long position, above it for a short.",
+                    "example": 2400
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "example": {
+                  "requestId": "a1b2c3",
+                  "data": {
+                    "tradingSymbol": "RELIANCE-EQ",
+                    "exchangeSegment": "NSE",
+                    "scripCode": "2885",
+                    "leg": "STOPLOSS",
+                    "action": "PLACED",
+                    "flavor": "REGULAR",
+                    "orderId": "250512000012345",
+                    "quantity": 60,
+                    "price": 2400,
+                    "limitPrice": 2399.95,
+                    "isSubmitted": true
+                  }
+                },
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "data"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PositionRiskOrderResult"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/portfolio/positions/target": {
+      "patch": {
+        "operationId": "set-position-target",
+        "tags": [
+          "portfolio"
+        ],
+        "summary": "Set a position target",
+        "description": "Places a target (limit) exit order for an open position, or amends the existing one. Quantity is taken from the live position, never from the caller.",
+        "x-plan": "free",
+        "x-status": "live",
+        "x-rate-limit": {
+          "short": {
+            "limit": 50,
+            "per": "minute"
+          },
+          "long": {
+            "limit": 3000,
+            "per": "day"
+          }
+        },
+        "x-static-ip": true,
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "flavor",
+                  "productType",
+                  "targetPrice"
+                ],
+                "properties": {
+                  "tradingSymbol": {
+                    "type": "string",
+                    "description": "Trading symbol from the instrument list. Required unless exchangeSegment + scripCode are sent.",
+                    "example": "RELIANCE-EQ"
+                  },
+                  "exchangeSegment": {
+                    "type": "string",
+                    "description": "Exchange segment. Required when tradingSymbol is not sent.",
+                    "enum": [
+                      "NSE",
+                      "BSE",
+                      "NSEFO",
+                      "BSEFO",
+                      "NSECDSFO",
+                      "BSECDSFO",
+                      "MCXFO"
+                    ],
+                    "example": "NSE"
+                  },
+                  "scripCode": {
+                    "type": "string",
+                    "description": "Broker scrip code (token). Required when tradingSymbol is not sent.",
+                    "example": "2885"
+                  },
+                  "flavor": {
+                    "type": "string",
+                    "enum": [
+                      "REGULAR",
+                      "BO",
+                      "CO",
+                      "GTT"
+                    ],
+                    "description": "Flavor the exit order is placed under. BO/CO amend the position's own broker-owned leg and must match the flavor GET /portfolio/positions reports. REGULAR places a DAY stop that dies at EOD; GTT places one that carries forward; a GTT exit is still placed against a REGULAR position.",
+                    "example": "REGULAR"
+                  },
+                  "productType": {
+                    "type": "string",
+                    "enum": [
+                      "INTRADAY",
+                      "DELIVERY"
+                    ],
+                    "description": "Product type of the open position.",
+                    "example": "INTRADAY"
+                  },
+                  "orderId": {
+                    "type": "string",
+                    "description": "Existing exit order to modify. Only needed to disambiguate when more than one live exit order matches the position.",
+                    "example": "250512000012345"
+                  },
+                  "targetPrice": {
+                    "type": "number",
+                    "description": "Target limit price. Must be above LTP for a long position, below it for a short.",
+                    "example": 2600
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "example": {
+                  "requestId": "a1b2c3",
+                  "data": {
+                    "tradingSymbol": "RELIANCE-EQ",
+                    "exchangeSegment": "NSE",
+                    "scripCode": "2885",
+                    "leg": "TARGET",
+                    "action": "PLACED",
+                    "flavor": "REGULAR",
+                    "orderId": "250512000012345",
+                    "quantity": 60,
+                    "price": 2600,
+                    "isSubmitted": true
+                  }
+                },
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "data"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PositionRiskOrderResult"
                     }
                   }
                 }
@@ -3138,7 +3430,6 @@
                       "exchange": "NSE",
                       "segment": "FO",
                       "scripKey": "NSEFO@52190",
-                      "logo": "https://high-space.blr1.cdn.digitaloceanspaces.com/logos/RELIANCE.png",
                       "symbol": "RELIANCE",
                       "underlyingSymbol": "RELIANCE",
                       "scripName": "RELIANCE 29 Sep Fut",
@@ -3165,7 +3456,6 @@
                       "exchange": "NSE",
                       "segment": "FO",
                       "scripKey": "NSEFO@61248",
-                      "logo": "https://high-space.blr1.cdn.digitaloceanspaces.com/logos/RELIANCE.png",
                       "symbol": "RELIANCE",
                       "underlyingSymbol": "RELIANCE",
                       "scripName": "RELIANCE 27 Oct Fut",
@@ -3192,7 +3482,6 @@
                       "exchange": "NSE",
                       "segment": "FO",
                       "scripKey": "NSEFO@70315",
-                      "logo": "https://high-space.blr1.cdn.digitaloceanspaces.com/logos/RELIANCE.png",
                       "symbol": "RELIANCE",
                       "underlyingSymbol": "RELIANCE",
                       "scripName": "RELIANCE 24 Nov Fut",
@@ -3256,7 +3545,7 @@
           "scrips"
         ],
         "summary": "Historical candles",
-        "description": "OHLCV candles for one instrument between two Unix timestamps. Each series is a separate array; the same index across them is one candle.",
+        "description": "OHLCV candles for one instrument, named by tradingSymbol or by exchangeSegment + scripCode between two Unix timestamps. Each series is a separate array; the same index across them is one candle.",
         "x-plan": "data",
         "x-status": "live",
         "x-rate-limit": {
@@ -3283,7 +3572,6 @@
               "schema": {
                 "type": "object",
                 "required": [
-                  "tradingSymbol",
                   "interval",
                   "fromTime",
                   "toTime"
@@ -3291,8 +3579,27 @@
                 "properties": {
                   "tradingSymbol": {
                     "type": "string",
-                    "description": "Trading symbol from the instrument list.",
+                    "description": "Trading symbol from the instrument list. Required unless exchangeSegment + scripCode are sent.",
                     "example": "RELIANCE-EQ"
+                  },
+                  "exchangeSegment": {
+                    "type": "string",
+                    "description": "Exchange segment. Required when tradingSymbol is not sent.",
+                    "enum": [
+                      "NSE",
+                      "BSE",
+                      "NSEFO",
+                      "BSEFO",
+                      "NSECDSFO",
+                      "BSECDSFO",
+                      "MCXFO"
+                    ],
+                    "example": "NSE"
+                  },
+                  "scripCode": {
+                    "type": "string",
+                    "description": "Broker scrip code (token). Required when tradingSymbol is not sent.",
+                    "example": "2885"
                   },
                   "interval": {
                     "type": "string",
@@ -3427,6 +3734,184 @@
         }
       }
     },
+    "/scrips/intraday": {
+      "post": {
+        "operationId": "intraday",
+        "tags": [
+          "scrips"
+        ],
+        "summary": "Intraday candles",
+        "description": "OHLCV candles of the most recent trading session for one instrument, named by tradingSymbol or by exchangeSegment + scripCode. The window is the last trading day, so it also works over a weekend or holiday. Same columnar shape as historical.",
+        "x-plan": "data",
+        "x-status": "live",
+        "x-rate-limit": {
+          "short": {
+            "limit": 20,
+            "per": "minute"
+          },
+          "long": {
+            "limit": 1200,
+            "per": "hour"
+          }
+        },
+        "x-static-ip": false,
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "interval"
+                ],
+                "properties": {
+                  "tradingSymbol": {
+                    "type": "string",
+                    "description": "Trading symbol from the instrument list. Required unless exchangeSegment + scripCode are sent.",
+                    "example": "RELIANCE-EQ"
+                  },
+                  "exchangeSegment": {
+                    "type": "string",
+                    "description": "Exchange segment. Required when tradingSymbol is not sent.",
+                    "enum": [
+                      "NSE",
+                      "BSE",
+                      "NSEFO",
+                      "BSEFO",
+                      "NSECDSFO",
+                      "BSECDSFO",
+                      "MCXFO"
+                    ],
+                    "example": "NSE"
+                  },
+                  "scripCode": {
+                    "type": "string",
+                    "description": "Broker scrip code (token). Required when tradingSymbol is not sent.",
+                    "example": "2885"
+                  },
+                  "interval": {
+                    "type": "string",
+                    "description": "Candle length: m = minutes, h = hours.",
+                    "enum": [
+                      "1m",
+                      "2m",
+                      "3m",
+                      "4m",
+                      "5m",
+                      "10m",
+                      "15m",
+                      "30m",
+                      "45m",
+                      "1h",
+                      "2h",
+                      "3h",
+                      "4h"
+                    ],
+                    "example": "5m"
+                  },
+                  "fields": {
+                    "type": "array",
+                    "description": "Accepted but not used: every series is always returned.",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "example": {
+                  "requestId": "a1b2c3",
+                  "data": {
+                    "tradingSymbol": "NSE@2885",
+                    "interval": "5m",
+                    "timestamp": [
+                      1790308500,
+                      1790308800,
+                      1790309100,
+                      1790309400,
+                      1790309700
+                    ],
+                    "open": [
+                      1408.2,
+                      1409.4,
+                      1410.1,
+                      1409.6,
+                      1411
+                    ],
+                    "high": [
+                      1410.3,
+                      1411.2,
+                      1411.5,
+                      1411,
+                      1412.8
+                    ],
+                    "low": [
+                      1407.6,
+                      1408.9,
+                      1409.2,
+                      1408.8,
+                      1410.4
+                    ],
+                    "close": [
+                      1409.4,
+                      1410.1,
+                      1409.6,
+                      1411,
+                      1412.3
+                    ],
+                    "volume": [
+                      184320,
+                      152110,
+                      139870,
+                      121450,
+                      160230
+                    ]
+                  }
+                },
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "data"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/HistoricalCandles"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/scrips/option-chain": {
       "post": {
         "operationId": "option-chain",
@@ -3498,7 +3983,6 @@
                       "exchange": "NSE",
                       "segment": "ES",
                       "scripKey": "NSE@2885",
-                      "logo": "https://high-space.blr1.cdn.digitaloceanspaces.com/logos/RELIANCE.png",
                       "symbol": "RELIANCE",
                       "scripName": "Reliance Industries Ltd",
                       "marketLot": 1,
@@ -4005,11 +4489,6 @@
           "scripKey": {
             "type": "string",
             "example": "NSE@2885"
-          },
-          "logo": {
-            "type": "string",
-            "format": "uri",
-            "example": "https://high-space.blr1.cdn.digitaloceanspaces.com/logos/RELIANCE.png"
           },
           "symbol": {
             "type": "string",
@@ -5488,6 +5967,84 @@
             "items": {
               "$ref": "#/components/schemas/InstrumentFile"
             }
+          }
+        }
+      },
+      "PositionRiskOrderResult": {
+        "type": "object",
+        "description": "One stop-loss or target exit order, placed new or amended in place. `quantity` is what the order actually covers after clamping to the live position.",
+        "required": [
+          "tradingSymbol",
+          "exchangeSegment",
+          "scripCode",
+          "leg",
+          "action",
+          "flavor",
+          "orderId",
+          "quantity",
+          "price",
+          "isSubmitted"
+        ],
+        "properties": {
+          "tradingSymbol": {
+            "type": "string",
+            "example": "RELIANCE-EQ"
+          },
+          "exchangeSegment": {
+            "type": "string",
+            "example": "NSE"
+          },
+          "scripCode": {
+            "type": "string",
+            "example": "2885"
+          },
+          "leg": {
+            "type": "string",
+            "enum": [
+              "STOPLOSS",
+              "TARGET"
+            ],
+            "description": "Which exit leg was set."
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "PLACED",
+              "MODIFIED"
+            ],
+            "description": "Whether a new exit order was placed or an existing one amended."
+          },
+          "flavor": {
+            "type": "string",
+            "enum": [
+              "REGULAR",
+              "BO",
+              "CO",
+              "GTT"
+            ]
+          },
+          "orderId": {
+            "type": "string",
+            "description": "Broker order id of the exit order. Empty for BO/CO, whose modify endpoint returns no id.",
+            "example": "250512000012345"
+          },
+          "quantity": {
+            "type": "integer",
+            "example": 60
+          },
+          "price": {
+            "type": "number",
+            "description": "Trigger price for a stop-loss, limit price for a target.",
+            "example": 2400
+          },
+          "limitPrice": {
+            "type": "number",
+            "description": "Limit price a stop-loss will be sent at once triggered: one price tick past the trigger (below for a sell exit, above for a buy). Same as price for a target.",
+            "example": 2399.95
+          },
+          "isSubmitted": {
+            "type": "boolean",
+            "example": true
           }
         }
       }

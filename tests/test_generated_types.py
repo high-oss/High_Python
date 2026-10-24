@@ -17,9 +17,9 @@ def test_covers_every_operation_in_the_pinned_spec():
         for method in item
         if method in ("get", "post", "put", "delete", "patch")
     ]
-    # 27 wrapped-or-excluded operations from the original contract, plus the
-    # instrument list manifest (GET /instruments) added alongside it.
-    assert len(operations) == 28
+    # 31 contract operations: 27 wrapped by the SDK, 3 excluded auth operations
+    # (consent flow, token introspection), and the instrument list GET /instruments.
+    assert len(operations) == 31
 
 
 def test_exposes_the_shared_component_schemas_the_facades_return():
@@ -28,6 +28,8 @@ def test_exposes_the_shared_component_schemas_the_facades_return():
     # suite's compile-time `Pick<Order, 'orderId'>` assertion.
     assert "orderId" in models.Order.model_fields
     assert "availableBalance" in models.Funds.model_fields
+    # ScripInfo.logo was removed from the contract; it must not reappear.
+    assert "logo" not in models.ScripInfo.model_fields
 
 
 def test_exposes_the_instruments_manifest_and_file_models():

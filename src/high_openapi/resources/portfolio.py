@@ -15,11 +15,17 @@ from ..generated.models import (
     PositionConvertResult,
     PositionExitAllResult,
     PositionExitResult,
+    PositionRiskOrderResult,
     Positions,
+    SetPositionStoplossRequest,
+    SetPositionTargetRequest,
 )
-from ._shared import Body, dump_body, parse
+from ._shared import Body, dump_body, dump_instrument_body, parse
 
-__all__ = ["PortfolioResource", "AsyncPortfolioResource", "ConvertPositionRequest", "ExitPositionRequest"]
+__all__ = [
+    "PortfolioResource", "AsyncPortfolioResource", "ConvertPositionRequest", "ExitPositionRequest",
+    "SetPositionStoplossRequest", "SetPositionTargetRequest",
+]
 
 
 class PortfolioResource:
@@ -59,6 +65,26 @@ class PortfolioResource:
             body=payload, cancel_event=cancel_event,
         )
         return parse(PositionConvertResult, data)
+
+    def set_stoploss(self, body: Body, *, cancel_event=None) -> PositionRiskOrderResult:
+        """Places a stop-loss exit for an open position, or amends the existing
+        one. Requires a static IP. Never retried."""
+        payload = dump_instrument_body(SetPositionStoplossRequest, body)
+        data = http_sync.send_request(
+            self._client, self._config, method="PATCH", path="/portfolio/positions/stoploss", auth="bearer",
+            body=payload, cancel_event=cancel_event,
+        )
+        return parse(PositionRiskOrderResult, data)
+
+    def set_target(self, body: Body, *, cancel_event=None) -> PositionRiskOrderResult:
+        """Places a target exit for an open position, or amends the existing
+        one. Requires a static IP. Never retried."""
+        payload = dump_instrument_body(SetPositionTargetRequest, body)
+        data = http_sync.send_request(
+            self._client, self._config, method="PATCH", path="/portfolio/positions/target", auth="bearer",
+            body=payload, cancel_event=cancel_event,
+        )
+        return parse(PositionRiskOrderResult, data)
 
     def exit_all_positions(self, *, cancel_event=None) -> PositionExitAllResult:
         """Squares off every open position. Never retried."""
@@ -108,6 +134,22 @@ class AsyncPortfolioResource:
             body=payload,
         )
         return parse(PositionConvertResult, data)
+
+    async def set_stoploss(self, body: Body) -> PositionRiskOrderResult:
+        payload = dump_instrument_body(SetPositionStoplossRequest, body)
+        data = await http_async.send_request(
+            self._client, self._config, method="PATCH", path="/portfolio/positions/stoploss", auth="bearer",
+            body=payload,
+        )
+        return parse(PositionRiskOrderResult, data)
+
+    async def set_target(self, body: Body) -> PositionRiskOrderResult:
+        payload = dump_instrument_body(SetPositionTargetRequest, body)
+        data = await http_async.send_request(
+            self._client, self._config, method="PATCH", path="/portfolio/positions/target", auth="bearer",
+            body=payload,
+        )
+        return parse(PositionRiskOrderResult, data)
 
     async def exit_all_positions(self) -> PositionExitAllResult:
         data = await http_async.send_request(

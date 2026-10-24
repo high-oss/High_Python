@@ -15,7 +15,8 @@ from __future__ import annotations
 
 from typing import Any, List, Mapping, Optional, Type, TypeVar, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
+from pydantic_core import InitErrorDetails, PydanticCustomError
 
 M = TypeVar("M", bound=BaseModel)
 
@@ -28,6 +29,30 @@ def dump_body(model_cls: Type[BaseModel], body: Body) -> Any:
     ready payload — never a hand-widened shape, since the model IS the spec."""
     model = body if isinstance(body, model_cls) else model_cls.model_validate(body)
     return model.model_dump(mode="json", exclude_none=True)
+
+
+def dump_instrument_body(model_cls: Type[BaseModel], body: Body) -> Any:
+    """``dump_body`` for a request that names its instrument either by
+    ``tradingSymbol`` or by ``exchangeSegment`` + ``scripCode``. The spec
+    expresses that as two optional groups with no ``oneOf``, so the generated
+    model cannot enforce it; this does, and raises ``ValidationError`` before
+    anything is sent, like every other body error."""
+    payload = dump_body(model_cls, body)
+    has_symbol = payload.get("tradingSymbol") is not None
+    has_pair = payload.get("exchangeSegment") is not None and payload.get("scripCode") is not None
+    if not (has_symbol or has_pair):
+        raise ValidationError.from_exception_data(
+            model_cls.__name__,
+            [InitErrorDetails(
+                type=PydanticCustomError(
+                    "missing_instrument",
+                    "Send tradingSymbol, or exchangeSegment and scripCode together.",
+                ),
+                loc=(),
+                input=payload,
+            )],
+        )
+    return payload
 
 
 def dump_list_body(item_cls: Type[BaseModel], items) -> Any:
