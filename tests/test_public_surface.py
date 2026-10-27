@@ -46,13 +46,13 @@ def test_wraps_neither_the_browser_login_page_the_consent_flow_nor_introspection
         assert not hasattr(client.auth, name), f"auth.{name} must not exist"
 
 
-def test_exposes_all_five_resources_on_a_constructed_client():
+def test_exposes_all_six_resources_on_a_constructed_client():
     client = sdk.HighClient(access_token="tok")
-    for name in ["auth", "orders", "portfolio", "scrips", "market"]:
+    for name in ["auth", "orders", "portfolio", "profile", "scrips", "market"]:
         assert getattr(client, name, None) is not None, f"client.{name} is missing"
 
 
-def test_exposes_all_five_resources_on_the_async_client_too():
+def test_exposes_all_six_resources_on_the_async_client_too():
     client = sdk.AsyncHighClient(access_token="tok")
     for name in ["auth", "orders", "portfolio", "scrips", "market"]:
         assert getattr(client, name, None) is not None, f"client.{name} is missing"
@@ -76,6 +76,7 @@ EXPECTED_METHODS = {
         "positions", "holdings", "funds", "convert_position", "set_stoploss", "set_target",
         "exit_all_positions", "exit_position",
     ],
+    "profile": ["get"],
     "scrips": ["quotes", "ohlc", "depth", "expiries", "future_data", "historical", "intraday", "option_chain"],
     "market": ["status"],
 }
@@ -89,10 +90,10 @@ def test_exposes_every_operation_the_sdk_covers_as_a_method():
         for method in methods:
             assert callable(getattr(target, method, None)), f"{resource}.{method}"
             count += 1
-    # The contract has 31 operations: 27 are wrapped here; the consent flow and
+    # The contract has 32 operations: 28 are wrapped here; the consent flow and
     # token introspection are deliberately excluded, and the instrument list is
     # a resource of its own (see above).
-    assert count == 27
+    assert count == 28
 
 
 def test_exposes_every_operation_on_the_async_client_too():
@@ -103,7 +104,7 @@ def test_exposes_every_operation_on_the_async_client_too():
         for method in methods:
             assert callable(getattr(target, method, None)), f"{resource}.{method}"
             count += 1
-    assert count == 27
+    assert count == 28
 
 
 def test_ships_minimal_runtime_dependencies():

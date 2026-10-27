@@ -17,9 +17,9 @@ def test_covers_every_operation_in_the_pinned_spec():
         for method in item
         if method in ("get", "post", "put", "delete", "patch")
     ]
-    # 31 contract operations: 27 wrapped by the SDK, 3 excluded auth operations
+    # 32 contract operations: 28 wrapped by the SDK, 3 excluded auth operations
     # (consent flow, token introspection), and the instrument list GET /instruments.
-    assert len(operations) == 31
+    assert len(operations) == 32
 
 
 def test_exposes_the_shared_component_schemas_the_facades_return():

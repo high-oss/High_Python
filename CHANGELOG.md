@@ -4,6 +4,14 @@ All notable changes to this package are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- `high.profile.get` on both clients (`GET /profile`): the account holder's
+  identity, demat and bank details as a `Profile`. PAN, Aadhaar and bank
+  account numbers are masked to their last four characters.
+
 ## [0.1.0] — 2026-10-24
 
 Synced to the canonical spec at commit `c1f37de`. Pre-1.0: the surface may

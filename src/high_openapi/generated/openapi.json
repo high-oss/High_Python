@@ -37,6 +37,12 @@
       "x-plan": "free"
     },
     {
+      "name": "profile",
+      "description": "The account holder's profile: identity, demat and bank details.",
+      "x-display-name": "Profile",
+      "x-plan": "free"
+    },
+    {
       "name": "market",
       "description": "Exchange status and session information.",
       "x-display-name": "Market",
@@ -2763,6 +2769,106 @@
         }
       }
     },
+    "/profile": {
+      "get": {
+        "operationId": "profile",
+        "tags": [
+          "profile"
+        ],
+        "summary": "Account profile",
+        "description": "The account holder's identity, demat and bank details. PAN, Aadhaar and bank account numbers are masked to their last four characters.",
+        "x-plan": "free",
+        "x-status": "live",
+        "x-rate-limit": {
+          "short": {
+            "limit": 60,
+            "per": "minute"
+          },
+          "long": {
+            "limit": 2000,
+            "per": "hour"
+          }
+        },
+        "x-static-ip": false,
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "example": {
+                  "requestId": "a1b2c3",
+                  "data": {
+                    "clientId": "HS1234",
+                    "name": "Asha Verma",
+                    "email": "asha.verma@example.com",
+                    "mobile": "9876543210",
+                    "pan": "XXXXXX234F",
+                    "aadhaar": "XXXXXXXX9012",
+                    "depository": "CDSL",
+                    "boCode": "1208160000123456",
+                    "dpCode": "12081600",
+                    "isPOAApproved": true,
+                    "isNRI": false,
+                    "isMTFEnabled": true,
+                    "segmentsAllowed": [
+                      "NSE_CASH",
+                      "BSE_CASH",
+                      "NSE_FNO"
+                    ],
+                    "address": {
+                      "address": "12, MG Road",
+                      "city": "Bengaluru",
+                      "state": "Karnataka",
+                      "pinCode": "560001"
+                    },
+                    "bankAccounts": [
+                      {
+                        "bankName": "HDFC Bank",
+                        "accountNumber": "XXXXXX4321",
+                        "ifscCode": "HDFC0000001",
+                        "branch": "MG Road",
+                        "isPrimary": true
+                      }
+                    ]
+                  }
+                },
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "data"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Profile"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/market/status": {
       "get": {
         "operationId": "market-status",
@@ -5453,6 +5559,153 @@
           "unsettledFutureAmount": {
             "type": "number",
             "example": 0
+          }
+        }
+      },
+      "Profile": {
+        "type": "object",
+        "description": "The account holder's profile: identity, demat and bank details. PAN, Aadhaar and bank account numbers are masked to their last four characters.",
+        "required": [
+          "clientId",
+          "name",
+          "email",
+          "mobile",
+          "pan",
+          "aadhaar",
+          "depository",
+          "boCode",
+          "dpCode",
+          "isPOAApproved",
+          "isNRI",
+          "isMTFEnabled",
+          "segmentsAllowed",
+          "address",
+          "bankAccounts"
+        ],
+        "properties": {
+          "clientId": {
+            "type": "string",
+            "example": "HS1234"
+          },
+          "name": {
+            "type": "string",
+            "example": "Asha Verma"
+          },
+          "email": {
+            "type": "string",
+            "example": "asha.verma@example.com"
+          },
+          "mobile": {
+            "type": "string",
+            "example": "9876543210"
+          },
+          "pan": {
+            "type": "string",
+            "description": "Masked to the last four characters.",
+            "example": "XXXXXX234F"
+          },
+          "aadhaar": {
+            "type": "string",
+            "description": "Masked to the last four characters.",
+            "example": "XXXXXXXX9012"
+          },
+          "depository": {
+            "type": "string",
+            "example": "CDSL"
+          },
+          "boCode": {
+            "type": "string",
+            "example": "1208160000123456"
+          },
+          "dpCode": {
+            "type": "string",
+            "example": "12081600"
+          },
+          "isPOAApproved": {
+            "type": "boolean",
+            "example": true
+          },
+          "isNRI": {
+            "type": "boolean",
+            "example": false
+          },
+          "isMTFEnabled": {
+            "type": "boolean",
+            "example": true
+          },
+          "segmentsAllowed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "NSE_CASH",
+              "BSE_CASH",
+              "NSE_FNO"
+            ]
+          },
+          "address": {
+            "type": "object",
+            "required": [
+              "address",
+              "city",
+              "state",
+              "pinCode"
+            ],
+            "properties": {
+              "address": {
+                "type": "string",
+                "example": "12, MG Road"
+              },
+              "city": {
+                "type": "string",
+                "example": "Bengaluru"
+              },
+              "state": {
+                "type": "string",
+                "example": "Karnataka"
+              },
+              "pinCode": {
+                "type": "string",
+                "example": "560001"
+              }
+            }
+          },
+          "bankAccounts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "bankName",
+                "accountNumber",
+                "ifscCode",
+                "branch",
+                "isPrimary"
+              ],
+              "properties": {
+                "bankName": {
+                  "type": "string",
+                  "example": "HDFC Bank"
+                },
+                "accountNumber": {
+                  "type": "string",
+                  "description": "Masked to the last four characters.",
+                  "example": "XXXXXX4321"
+                },
+                "ifscCode": {
+                  "type": "string",
+                  "example": "HDFC0000001"
+                },
+                "branch": {
+                  "type": "string",
+                  "example": "MG Road"
+                },
+                "isPrimary": {
+                  "type": "boolean",
+                  "example": true
+                }
+              }
+            }
           }
         }
       },

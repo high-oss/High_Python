@@ -212,13 +212,14 @@ the two clients use the idiomatic mechanism for each:
 
 ## Resources
 
-27 operations across five namespaces, methods named per PEP 8:
+28 operations across six namespaces, methods named per PEP 8:
 
 | Namespace | Methods |
 |---|---|
 | `auth` | `generate_access_token` |
 | `orders` | `place` · `modify` · `get` · `cancel` · `list` · `trades` · `trades_for` · `charges` · `margin` |
 | `portfolio` | `positions` · `holdings` · `funds` · `convert_position` · `set_stoploss` · `set_target` · `exit_all_positions` · `exit_position` |
+| `profile` | `get` |
 | `scrips` | `quotes` · `ohlc` · `depth` · `expiries` · `future_data` · `historical` · `intraday` · `option_chain` |
 | `market` | `status` |
 

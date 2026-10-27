@@ -27,6 +27,7 @@ from .resources.instruments import AsyncInstrumentsResource, InstrumentCategory,
 from .resources.market import AsyncMarketResource, MarketResource
 from .resources.orders import AsyncOrdersResource, OrdersResource
 from .resources.portfolio import AsyncPortfolioResource, PortfolioResource
+from .resources.profile import AsyncProfileResource, ProfileResource
 from .resources.scrips import AsyncScripsResource, ExpiryType, ScripsResource
 
 __version__ = "0.1.0"
@@ -61,6 +62,8 @@ __all__ = [
     "AsyncOrdersResource",
     "PortfolioResource",
     "AsyncPortfolioResource",
+    "ProfileResource",
+    "AsyncProfileResource",
     "ScripsResource",
     "AsyncScripsResource",
     "ExpiryType",

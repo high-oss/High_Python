@@ -39,6 +39,7 @@ from .resources.instruments import AsyncInstrumentsResource, InstrumentsResource
 from .resources.market import AsyncMarketResource, MarketResource
 from .resources.orders import AsyncOrdersResource, OrdersResource
 from .resources.portfolio import AsyncPortfolioResource, PortfolioResource
+from .resources.profile import AsyncProfileResource, ProfileResource
 from .resources.scrips import AsyncScripsResource, ScripsResource
 
 
@@ -63,6 +64,7 @@ class HighClient:
         self.market = MarketResource(self._client, self.config)
         self.orders = OrdersResource(self._client, self.config)
         self.portfolio = PortfolioResource(self._client, self.config)
+        self.profile = ProfileResource(self._client, self.config)
         self.scrips = ScripsResource(self._client, self.config)
 
     def close(self) -> None:
@@ -103,6 +105,7 @@ class AsyncHighClient:
         self.market = AsyncMarketResource(self._client, self.config)
         self.orders = AsyncOrdersResource(self._client, self.config)
         self.portfolio = AsyncPortfolioResource(self._client, self.config)
+        self.profile = AsyncProfileResource(self._client, self.config)
         self.scrips = AsyncScripsResource(self._client, self.config)
 
     async def aclose(self) -> None:
